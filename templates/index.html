@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TMRS</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+    <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>
+    <script src="//code.jquery.com/jquery-1.11.1.min.js"></script>
+</head>
+
+<body class="background">
+    
+    <!-- Search Box -->
+    <div id="head-block">
+    <div id="logo-block"><h2>TMRS</h2></div>
+    <div class="container">
+    <div class="row">
+        <form action ="/" method="POST">
+        <div id="custom-search-input">
+        <div class="input-group col-md-12">
+            <input type="text" name="symptoms" class="search-query form-control" placeholder="Search" />
+            <span class="input-group-btn">
+            <button class="btn btn-danger" type="submit">
+            <span class=" glyphicon glyphicon-search"></span>
+            </button>
+            </span>
+        </div>
+        </div>
+        </form>
+    </div>
+    </div>
+    </div>
+    <!-- End Search Box -->
+
+    <!-- Main block-->
+    <div id="block-main">
+    
+    {% if diseases %}
+    <!-- Symptoms block-->
+    <div id="symptoms-block">
+        <div style="padding: 10px;">
+        <p style="border:1px; border-style:solid; border-color:rgb(15, 153, 217); padding: 5px; color: #e8ebee;">
+            Symptoms
+        </p>
+        </div>
+        <ul class="symp-list">
+            {% for symp in symptoms %}
+                <li>{{symp}}</li>
+            {% endfor %}
+        </ul> 
+    </div>
+    <!-- Table result block-->
+    <div id="block-result">
+    <table>
+    <tr>
+        <th style="padding: 10px;" colspan="4">
+            <p style="border:1px; border-style:solid; border-color:rgb(15, 153, 217); padding: 4px; color: #e8ebee;">
+                Diagnosis Recommendation
+            </p>
+        </th>
+    </tr>
+    <tr>
+        <td style="font-size: 10pt;"></td>
+        <td style="text-align:left; font-size: 10pt;">Name</td>
+        <td style="text-align:left; font-size: 10pt;">Distance</td>
+        <td style="text-align:left; font-size: 10pt;">Hop</td>
+    </tr>
+    {% set count = namespace(value=1) %}
+    {% for disease, distance in diseases.items() %}
+    <tr>
+        <td > {{ count.value }}. </td>
+        <td style="text-align:left; "> {{ disease }} </td>
+        <td style="text-align:left; "> {{ distance }} </td>
+        <td style="text-align:left; ">-</td>
+    </tr>
+        {% set count.value = count.value + 1 %}
+    {% endfor %}
+    </table>
+    </div>
+    {% endif %}
+    <!-- End table result block-->
+
+    <!-- Fish eye block-->
+    <div id="block-eyefish">
+    
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+    <script type="text/javascript">
+        var w = 550;
+		var h = 550;
+		var dataset = {
+			nodes:[
+					{name:"Adam"},
+					{name:"Bob"},
+					{name:"Carrie"},
+					{name:"Donovan"},
+					{name:"Edward"},
+					{name:"Felicity"},
+					{name:"George"},
+					{name:"Hannah"},
+					{name:"Iris"},
+					{name:"Jerry"}
+			],
+			edges:[
+					{source: 0, target: 1},
+					{source: 0, target: 2},
+					{source: 0, target: 3},
+					{source: 0, target: 4},
+					{source: 1, target: 5},
+					{source: 2, target: 5},
+					{source: 2, target: 5},
+					{source: 3, target: 4},
+					{source: 5, target: 8},
+					{source: 5, target: 9},
+					{source: 6, target: 7},
+					{source: 7, target: 8},
+					{source: 8, target: 9},
+
+			]
+		};
+		var force = d3.layout.force()
+								.nodes(dataset.nodes)
+								.links(dataset.edges)
+								.size([w, h])
+								.linkDistance([100])
+								.charge([-150])
+								.start();
+                                var node_drag = d3.behavior.drag()
+											.on("dragstart", dragstart)
+											.on("drag", dragmove)
+											.on("dragend", dragend);
+
+        function dragstart(d, i) {
+		    force.stop() // stops the force auto positioning before you start dragging
+	    }
+
+        function dragmove(d, i) {
+            d.px += d3.event.dx;
+            d.py += d3.event.dy;
+            d.x += d3.event.dx;
+            d.y += d3.event.dy; 
+            tick(); // this is the key to make it work together with updating both px,py,x,y on d !
+        }
+
+        function dragend(d, i) {
+            d.fixed = true; // of course set the node to fixed so the force doesn't include the node in its auto positioning stuff
+            tick();
+            force.resume();
+        }
+		var colors = d3.scale.category10();
+        
+        var svg3 = d3.select("body")
+						.append("svg")
+                        .style("position", "absolute")
+                        .style("top", "70px")
+                        .style("right", "285px")
+                        .style("background", "rgb(161, 157, 157,0.1)")
+                        .style("border-radius", "100%")
+                        .style("box-shadow", "0 0 20px rgb(15, 153, 217)")
+                        .attr("width", "550")
+						.attr("height", "550");
+
+        var svg2 = d3.select("body")
+						.append("svg")
+                        .style("position", "absolute")
+                        .style("top", "150px")
+                        .style("right", "360px")
+                        .style("background", "rgba(83, 118, 233, 0.2)")
+                        .style("border-radius", "100%")
+                        .style("border-style", "solid")
+                        .style("border-color", "rgb(86, 161, 211)")
+                        .style("border-width", "3px")
+                        .attr("width", "400")
+						.attr("height", "400");
+
+        var svg1 = d3.select("body")
+						.append("svg")
+                        .style("position", "absolute")
+                        .style("top", "200px")
+                        .style("right", "410px")
+                        .style("background", "rgb(161, 157, 157,.2)")
+                        .style("border-radius", "100%")
+                        .style("border-style", "solid")
+                        .style("border-color", "rgb(240, 85, 28)")
+                        .style("border-width", "5px")
+                        .attr("width", "300")
+						.attr("height", "300");
+
+		var svg = d3.select("body")
+						.append("svg")
+                        .style("position", "absolute")
+                        .style("top", "70px")
+                        .style("right", "285px")
+                        .style("border-radius", "100%")
+                        .attr("width", w)
+						.attr("height", h);
+
+        
+		var edges = svg.selectAll("line")
+						.data(dataset.edges)
+						.enter()
+						.append("line")
+						.style("stroke", "#ccc")
+                        .style("stroke-opacity", .2)
+						.style("stroke-width", 1);
+		var nodes = svg.selectAll("circle")
+						.data(dataset.nodes)
+						.enter()
+						.append("circle")
+						.attr("r", 10)
+						.style("fill", function(d, i){
+							return colors(i);
+						})
+						.call(node_drag);
+            
+		var label = svg.selectAll(".mytext")
+						.data(dataset.nodes)
+						.enter()
+						.append("text")
+					    .text(function (d) { return d.name; })
+					    .style("text-anchor", "middle")
+					    .style("fill", "rgb(156, 204, 236)")
+					    .style("font-family", "Arial")
+					    .style("font-size", 12);
+		
+        force.on("tick", tick);
+        function tick(){
+            edges.attr("x1", function(d) { return d.source.x; })
+                .attr("y1", function(d) { return d.source.y; })
+                .attr("x2", function(d) { return d.target.x; })
+                .attr("y2", function(d) { return d.target.y; });
+            nodes.attr("transform", function(d) { 
+                console.log("translate(" + d.x + "," + d.y + ")");
+                return "translate(" + d.x + "," + d.y + ")"; });
+            label.attr("x", function(d){ return d.x; })
+                .attr("y", function (d) {return d.y - 10; });
+
+            
+        };
+    </script>
+    </div>
+    <!-- End fish eye block -->
+    </div>
+</body>
+
+</html>
+

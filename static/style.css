@@ -1,0 +1,129 @@
+/* Interface background */
+.background{
+    background-image: url('image/back-ground.jpg');
+    background-size: cover;
+}
+#head-block{
+    position: relative;
+}
+#logo-block {
+    position: absolute;
+    left: 10px;
+    color: rgb(243, 126, 47);
+   
+}
+/* Search Box */
+#custom-search-input {
+    margin:0;
+    margin-top: 20px;
+    margin-left: 20px;
+    margin-bottom: 10px;
+    padding: 0;
+    
+}
+ 
+#custom-search-input .search-query {
+    padding-right: 3px;
+    padding-right: 4px \9;
+    padding-left: 3px;
+    padding-left: 4px \9;
+    /* IE7-8 doesn't have border-radius, so don't indent the padding */
+ 
+    margin-bottom: 0;
+    -webkit-border-radius: 3px;
+    -moz-border-radius: 3px;
+    border-radius: 3px;
+    background-color:rgba(123, 139, 150, 0.3);
+    color: rgb(253, 253, 255);
+}
+ 
+#custom-search-input button {
+    border: 0;
+    background: none;
+    /** belows styles are working good */
+    padding: 2px 5px;
+    margin-top: 2px;
+    position: relative;
+    left: -28px;
+    /* IE7-8 doesn't have border-radius, so don't indent the padding */
+    margin-bottom: 0;
+    -webkit-border-radius: 3px;
+    -moz-border-radius: 3px;
+    border-radius: 3px;
+    color:rgb(15, 153, 217);
+}
+ 
+.search-query:focus + button {
+    z-index: 3;   
+}
+
+/* symptoms block */
+#symptoms-block{
+    position: relative;
+    margin-left: 10px;
+    width: 383px;
+    padding: 5px;
+    font-family: "Arial"; font-size: 11pt;
+    font-weight: bold;
+    background-color: rgb(42, 76, 126,.5);
+    text-align: left;
+  
+}
+
+.symp-list{
+    color: rgb(156, 204, 236);
+}
+
+/* Result Table */
+
+table {
+    position: relative;
+    width: 383px;
+    margin-top: 10px;
+    margin-left: 10px;
+    color: rgb(156, 204, 236);
+   
+}
+th{
+    font-family: "Arial"; font-size: 11pt;
+    background-color: rgb(42, 76, 126,.5);
+}
+td{
+    padding: 5px;
+    font-family: Arial; font-size: 10pt;
+    font-weight: bold;
+    
+    background-color: rgb(42, 76, 126,.5);
+}
+
+
+/* Main Division */
+#block-main
+{
+    position: relative;
+    text-align:center;
+}
+/* Result table block */
+#block-result
+{
+    position: absolute;
+    left: 0px;
+    display:inline-block;
+}
+/* Fish eye block */
+#block-eyefish{
+    position: absolute;
+    top: 30%;
+    display:inline-block;
+}
+/* disease circle*/
+#disease-circle{
+    position: absolute;
+    width: 300px;
+    height: 300px;
+    background: rgb(161, 157, 157,.3);
+    border-radius: 100%;
+    border-style: solid;
+    border-color: rgb(240, 85, 28);
+    border-width: 10px;
+  }

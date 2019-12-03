@@ -1,0 +1,28 @@
+** Do in comman prompt(cmd)
+install flask
+    setup virtual env - py -m venv env
+    activate env - env\Scripts\activate
+    flask - pip install flask
+    import flask in python - python
+                           - import flask
+                           - exit()
+run flask
+    method 1 set environment
+        step 1
+            set app file - set FLASK_APP=app.py 
+            set environment mode - set FLASK_ENV=development 
+            turn on debug mode (auto restart server when edit code) - set FLASK_DEBUG=1
+            * for mac or linux replace "set" to "export"
+        step 2
+            run server - flask run
+
+    method 2 run module directly (run python file usually)
+        code
+            if __name__ == "__main__":
+                app.run(debug=True)
+
+** In case Error!!
+    case activate env
+    - env\Scripts\activate
+        error - cannot be loaded because running scripts is disabled on this system.
+        fix - Set-ExecutionPolicy Unrestricted -Force (Power Shell)

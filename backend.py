@@ -170,32 +170,46 @@ def create_graph(disease, path, centroid):
                 pair = sorted([p[source], p[target]])
                 if pair not in check_edge:
                     edge.append({'source' : node_index[p[source]], 'target' :  node_index[p[target]]})
+                    check_edge.append(pair)
     
     return node, edge
 
 def node_position(node, centroid):
     xc = 275
     yc = 275
+    node_size = 10
     circle_coordinates = {
         'circle1':{'x1':225,'x2':325,'y1':225,'y2':325,'r':50},
         'circle2':{'x1':125,'x2':425,'y1':125,'y2':425,'r':150},
         'circle3':{'x1':75,'x2':475,'y1':75,'y2':475,'r':200},
         'circle4':{'x1':0,'x2':550,'y1':0,'y2':550,'r':275},
     }
+    color = {
+        'red':'rgba(247, 32, 32, 1)',
+        'yellow':'rgba(172, 247, 32)',
+        'blue':'rgba(2, 69, 255)'
+    }
     node_pos = []
+    
     for n in node:
         x = None
         y = None
 
         # circle 1 (inside)
         if n['name'] == centroid:
-            n['color'] = 'rgb(255, 6, 6, 0.5)'
+            if n['color'] == 'red':
+                n['color'] = color['red']
+            elif n['color'] == 'yellow':
+                n['color'] = color['yellow']
+            else:
+                n['color'] = color['blue']
+
             x = xc
             y = yc
 
         # circle 2
         elif n['color'] == 'red':
-            
+            n['color'] = color['red']
             x1 = circle_coordinates['circle2']['x1']
             x2 = circle_coordinates['circle2']['x2']
             y1 = circle_coordinates['circle2']['y1']
@@ -208,12 +222,12 @@ def node_position(node, centroid):
                     d = math.sqrt((x - xc)**2  + (y - yc)**2)
 
                     # if point outside circle1
-                    if d-10 > circle_coordinates['circle1']['r']:
+                    if d-node_size > circle_coordinates['circle1']['r']:
                         break
               
                 d = math.sqrt((x - xc)**2  + (y - yc)**2)
                 # if point inside circle2
-                if d + 10 < circle_coordinates['circle2']['r']:
+                if d + node_size < circle_coordinates['circle2']['r']:
                     # check node intersect
                     intersect = False
                     for c2 in node_pos:
@@ -225,6 +239,7 @@ def node_position(node, centroid):
                         break
         # circle 3
         elif n['color'] == 'yellow':
+            n['color'] = color['yellow']
             x1 = circle_coordinates['circle3']['x1']
             x2 = circle_coordinates['circle3']['x2']
             y1 = circle_coordinates['circle3']['y1']
@@ -237,12 +252,12 @@ def node_position(node, centroid):
                     d = math.sqrt((x - xc)**2  + (y - yc)**2)
 
                     # if point outside circle1
-                    if d-10 > circle_coordinates['circle2']['r']:
+                    if d-node_size > circle_coordinates['circle2']['r']:
                         break
               
                 d = math.sqrt((x - xc)**2  + (y - yc)**2)
                 # if point inside circle2
-                if d + 10 < circle_coordinates['circle3']['r']:
+                if d + node_size < circle_coordinates['circle3']['r']:
                      # check node intersect
                     intersect = False
                     for c2 in node_pos:
@@ -255,6 +270,7 @@ def node_position(node, centroid):
 
          # circle 4 (outside)
         elif n['color'] == 'blue':
+            n['color'] = color['blue']
             x1 = circle_coordinates['circle4']['x1']
             x2 = circle_coordinates['circle4']['x2']
             y1 = circle_coordinates['circle4']['y1']
@@ -267,12 +283,12 @@ def node_position(node, centroid):
                     d = math.sqrt((x - xc)**2  + (y - yc)**2)
 
                     # if point outside circle1
-                    if d-10 > circle_coordinates['circle3']['r']:
+                    if d-node_size > circle_coordinates['circle3']['r']:
                         break
               
                 d = math.sqrt((x - xc)**2  + (y - yc)**2)
                 # if point inside circle2
-                if d + 10 + 10 < circle_coordinates['circle4']['r']:
+                if d + node_size*2 < circle_coordinates['circle4']['r']:
                      # check node intersect
                     intersect = False
                     for c2 in node_pos:

@@ -187,19 +187,27 @@
 						.data(dataset.edges)
 						.enter()
 						.append("line")
-						.style("stroke", "#ccc")
+						.style("stroke", "white")
                         .style("stroke-opacity", .2)
-						.style("stroke-width", 1);
+                        .style("stroke-width", 1)
+                        .style("filter", "drop-shadow(0px 0px 2px rgb(15, 153, 217))")
 
 		var nodes = svg.selectAll("circle")
 						.data(dataset.nodes)
 						.enter()
 						.append("circle")
-						.attr("r", 10)
-						.style("fill", function(d){
-							return d.color;
-						})
-						.call(node_drag);
+                        .attr("r", 6)
+                        .style("filter", function (d) {
+                            return "drop-shadow(0px 0px 9px "+d.color+")";
+                        })
+						.style("fill", "white")
+                        .style("stroke", function (d) {
+                            return d.color;
+                        })
+                        .style("stroke-opacity", .5)
+                        .style("stroke-width", 5)
+                        .on("click", click)
+                        .call(node_drag);
             
 		var label = svg.selectAll(".mytext")
 						.data(dataset.nodes)
@@ -218,13 +226,31 @@
                 .attr("x2", function(d) { return d.target.x; })
                 .attr("y2", function(d) { return d.target.y; });
             nodes.attr("transform", function(d) { 
-                console.log("translate("+d.name + d.x + "," + d.y + ")");
+                //console.log("translate("+d.name + d.x + "," + d.y + ")");
                 return "translate(" + (d.x) + "," + (d.y) + ")"; });
             label.attr("x", function(d){ return d.x; })
                 .attr("y", function (d) {return d.y - 10; });
 
             
         };
+
+        function click(d){ 
+            console.log(d.name)
+            
+            $.ajax({
+                url: "/re_centroid",
+                type: "post", //send it through get method
+                data:{'centroid': d.name},
+                success: function(response) {
+                    console.log(response)
+                },
+                error: function(xhr) {
+                    //Do Something to handle error
+                }
+            });
+        }
+
+
     </script>
     </div>
     <!-- End fish eye block -->

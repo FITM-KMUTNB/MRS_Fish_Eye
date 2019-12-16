@@ -77,7 +77,7 @@
     {% endfor %}
     </table>
     </div>
-    {% endif %}
+    
     <!-- End table result block-->
 
     <!-- Fish eye block-->
@@ -87,35 +87,11 @@
     <script type="text/javascript">
         var w = 550;
 		var h = 550;
+        var ptop = 70;
+        var pright = 250;
 		var dataset = {
-			nodes:[
-					{name:"Adam"},
-					{name:"Bob"},
-					{name:"Carrie"},
-					{name:"Donovan"},
-					{name:"Edward"},
-					{name:"Felicity"},
-					{name:"George"},
-					{name:"Hannah"},
-					{name:"Iris"},
-					{name:"Jerry"}
-			],
-			edges:[
-					{source: 0, target: 1},
-					{source: 0, target: 2},
-					{source: 0, target: 3},
-					{source: 0, target: 4},
-					{source: 1, target: 5},
-					{source: 2, target: 5},
-					{source: 2, target: 5},
-					{source: 3, target: 4},
-					{source: 5, target: 8},
-					{source: 5, target: 9},
-					{source: 6, target: 7},
-					{source: 7, target: 8},
-					{source: 8, target: 9},
-
-			]
+			nodes: JSON.parse('{{ node|tojson }}'),
+			edges: JSON.parse('{{ edge|tojson }}')
 		};
 		var force = d3.layout.force()
 								.nodes(dataset.nodes)
@@ -146,25 +122,24 @@
             tick();
             force.resume();
         }
-		var colors = d3.scale.category10();
-        
-        var svg3 = d3.select("body")
+
+        var circle4 = d3.select("body")
 						.append("svg")
                         .style("position", "absolute")
-                        .style("top", "70px")
-                        .style("right", "285px")
+                        .style("top", (ptop)+"px")
+                        .style("right", (pright)+"px")
                         .style("background", "rgb(161, 157, 157,0.1)")
                         .style("border-radius", "100%")
                         .style("box-shadow", "0 0 20px rgb(15, 153, 217)")
-                        .attr("width", "550")
-						.attr("height", "550");
+                        .attr("width", w)
+						.attr("height",h);
 
-        var svg2 = d3.select("body")
+        var circle3 = d3.select("body")
 						.append("svg")
                         .style("position", "absolute")
-                        .style("top", "150px")
-                        .style("right", "360px")
-                        .style("background", "rgba(83, 118, 233, 0.2)")
+                        .style("top", (ptop+75)+"px")
+                        .style("right", (pright+75)+"px")
+                        .style("background", "rgba(83, 118, 233, 0.1)")
                         .style("border-radius", "100%")
                         .style("border-style", "solid")
                         .style("border-color", "rgb(86, 161, 211)")
@@ -172,24 +147,37 @@
                         .attr("width", "400")
 						.attr("height", "400");
 
-        var svg1 = d3.select("body")
+        var circle2 = d3.select("body")
 						.append("svg")
                         .style("position", "absolute")
-                        .style("top", "200px")
-                        .style("right", "410px")
+                        .style("top", (ptop+125)+"px")
+                        .style("right", (pright+125)+"px")
+                        .style("background", "rgba(83, 118, 233, 0.2)")
+                        .style("border-radius", "100%")
+                        .style("border-style", "solid")
+                        .style("border-color", "rgb(86, 161, 211)")
+                        .style("border-width", "3px")
+                        .attr("width", "300")
+						.attr("height", "300");
+        
+        var circle1 = d3.select("body")
+						.append("svg")
+                        .style("position", "absolute")
+                        .style("top", (ptop+225)+"px")
+                        .style("right", (pright+225)+"px")
                         .style("background", "rgb(161, 157, 157,.2)")
                         .style("border-radius", "100%")
                         .style("border-style", "solid")
                         .style("border-color", "rgb(240, 85, 28)")
                         .style("border-width", "5px")
-                        .attr("width", "300")
-						.attr("height", "300");
+                        .attr("width", "100")
+						.attr("height", "100");
 
 		var svg = d3.select("body")
 						.append("svg")
                         .style("position", "absolute")
-                        .style("top", "70px")
-                        .style("right", "285px")
+                        .style("top", (ptop)+"px")
+                        .style("right", (pright)+"px")
                         .style("border-radius", "100%")
                         .attr("width", w)
 						.attr("height", h);
@@ -202,13 +190,14 @@
 						.style("stroke", "#ccc")
                         .style("stroke-opacity", .2)
 						.style("stroke-width", 1);
+
 		var nodes = svg.selectAll("circle")
 						.data(dataset.nodes)
 						.enter()
 						.append("circle")
 						.attr("r", 10)
-						.style("fill", function(d, i){
-							return colors(i);
+						.style("fill", function(d){
+							return d.color;
 						})
 						.call(node_drag);
             
@@ -229,8 +218,8 @@
                 .attr("x2", function(d) { return d.target.x; })
                 .attr("y2", function(d) { return d.target.y; });
             nodes.attr("transform", function(d) { 
-                console.log("translate(" + d.x + "," + d.y + ")");
-                return "translate(" + d.x + "," + d.y + ")"; });
+                console.log("translate("+d.name + d.x + "," + d.y + ")");
+                return "translate(" + (d.x) + "," + (d.y) + ")"; });
             label.attr("x", function(d){ return d.x; })
                 .attr("y", function (d) {return d.y - 10; });
 
@@ -240,6 +229,7 @@
     </div>
     <!-- End fish eye block -->
     </div>
+    {% endif %}
 </body>
 
 </html>

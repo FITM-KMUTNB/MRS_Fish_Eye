@@ -8,10 +8,12 @@ def index():
     if request.method == 'POST':
         input_keyword = request.form['symptoms'].split()
         symptoms = backend.check_keyword_exist(input_keyword)
-        disease, centroid = backend.disease_hop_activate(symptoms)
+        disease, centroid, path = backend.disease_hop_activate(symptoms)
         n_disease = {k: disease[k] for k in list(disease.keys())[:10]}
-      
-        return render_template('index.html', symptoms = symptoms, diseases = n_disease)
+        centroid = list(n_disease)[0]
+        node, edge = backend.create_graph(n_disease, path, centroid)
+        
+        return render_template('index.html', symptoms = symptoms, diseases = n_disease, node = node, edge=edge)
     else:
         return render_template('index.html')
 

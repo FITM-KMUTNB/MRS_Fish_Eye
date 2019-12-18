@@ -130,7 +130,7 @@
                         .style("right", (pright)+"px")
                         .style("background", "rgb(161, 157, 157,0.1)")
                         .style("border-radius", "100%")
-                        .style("box-shadow", "0 0 20px rgb(15, 153, 217)")
+                        .style("box-shadow", "0 0 20px rgba(15, 153, 217)")
                         .attr("width", w)
 						.attr("height",h);
 
@@ -190,7 +190,7 @@
 						.style("stroke", "white")
                         .style("stroke-opacity", .2)
                         .style("stroke-width", 1)
-                        .style("filter", "drop-shadow(0px 0px 2px rgb(15, 153, 217))")
+                        //.style("filter", "drop-shadow(0px 0px 2px rgb(15, 153, 217))")
 
 		var nodes = svg.selectAll("circle")
 						.data(dataset.nodes)
@@ -218,6 +218,7 @@
 					    .style("fill", "rgb(156, 204, 236)")
 					    .style("font-family", "Arial")
 					    .style("font-size", 12);
+                        
 		
         force.on("tick", tick);
         function tick(){

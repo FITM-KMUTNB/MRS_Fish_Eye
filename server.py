@@ -11,7 +11,10 @@ def index():
         disease, centroid, path = backend.disease_hop_activate(symptoms)
         n_disease = {k: disease[k] for k in list(disease.keys())[:10]}
         centroid = list(n_disease)[0]
-        node, edge = backend.create_graph(n_disease, path, centroid)
+        print("Calculate centroid success!")
+        sp_path = backend.centroid_shotest_path(n_disease, symptoms, centroid)
+        node, edge = backend.create_graph_sp(n_disease, sp_path, centroid)
+        print("Create graph success!")
         return render_template('index.html', symptoms = symptoms, diseases = n_disease, node = node, edge=edge)
     else:
         return render_template('index.html')

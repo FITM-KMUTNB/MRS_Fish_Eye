@@ -110,7 +110,7 @@ def create_graph(disease, path, centroid):
     node_index = dict()
     temp_path = [] # [[path1], [n]]
     index_id = 0
-
+ 
     # Store node info
     # iterate disease list
     for d in disease:
@@ -304,11 +304,84 @@ def node_position(node, centroid):
 
     return node
       
+def centroid_shotest_path(diseases, symptoms, centroid):
+    sp_path = dict()
+    path = nx.single_source_dijkstra_path(G, centroid, weight='cost')
+    
+    for s in symptoms:
+        if s in path:
+            sp_path[s] = path[s]
+    for d in diseases:
+        if d in path:
+            sp_path[d] = path[d]
+   
+    return sp_path
+def create_graph_sp(disease, path, centroid):
+    node = [] # [{name: node}]
+    edge = [] # [{source: node1, target: node2}]
+    node_index = dict()
+    temp_path = [] # [[path1], [n]]
+    index_id = 0
 
-#list1 = {'a','b'}
-#list2 = {'b', 'c','e'}
-#list1 |= list2
-#print(list1)
+    # Store node info
+    # iterate disease list
+    for d in path:
+        # check if disease have path to current symptom list.
+        temp_path.append(path[d])
+        # iterate node from source to target and store to node list.
+        for p in path[d]:
+            if p not in node_index:
+                color= None
+                                        
+                # color
+                if G.node[p]['tag'] == 'DS' or G.node[p]['tag'] == 'DT':
+                    color = 'red'
+                elif G.node[p]['tag'] == 'ST':
+                    color = 'yellow'
+                else :
+                    color = 'blue'
+                                            
+                node_index[p] = index_id
+                node.append({'name': p , 'color':color})
+                index_id += 1
+
+    d_list = list(disease)
+
+    # Link between disease
+    for d1 in range(len(d_list)):
+        for d2 in range(d1+1, len(d_list)):
+            getpath, distance = get2node_path(d_list[d1], d_list[d2])
+            temp_path.append(getpath)
+            # add node
+            for n in getpath:
+                if n not in node_index:
+                    color= None
+                    if G.node[n]['tag'] == 'DS' or G.node[n]['tag'] == 'DT':
+                        color = 'red'
+                    elif G.node[n]['tag'] == 'ST':
+                        color = 'yellow'
+                    else :
+                        color = 'blue'
+                        
+                    node_index[n] = index_id
+                    node.append({'name': n , 'color':color})
+                    index_id += 1
+
+    # Set postition (x, y)
+    node = node_position(node, centroid)
+ 
+    # Store edge info
+    check_edge = [] # for check if edge already exist.
+    # iterate path
+    for p in temp_path:
+        for source in range(len(p)):
+            for target in range(source + 1, len(p)):
+                pair = sorted([p[source], p[target]])
+                if pair not in check_edge:
+                    edge.append({'source' : node_index[p[source]], 'target' :  node_index[p[target]]})
+                    check_edge.append(pair)
+    
+    return node, edge
 #keywords=['itch', 'cough','fever']
 #disease_hop_activate(keywords)
 #print(nx.dijkstra_path(G, 'malaria','chickenpox'))

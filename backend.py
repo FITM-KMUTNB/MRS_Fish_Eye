@@ -162,7 +162,7 @@ def create_graph(disease, path, centroid):
     node = node_position(node, centroid)
  
     # Store edge info
-    check_edge = [] # for check if edge already exist.
+    check_edge = [] # for check if edge already exist
     # iterate path
     for p in temp_path:
         for source in range(len(p)):
@@ -198,18 +198,18 @@ def node_position(node, centroid):
         # circle 1 (inside)
         if n['name'] == centroid:
             if n['color'] == 'red':
-                n['color'] = color['red']
+                n['rgba'] = color['red']
             elif n['color'] == 'yellow':
-                n['color'] = color['yellow']
+                n['rgba'] = color['yellow']
             else:
-                n['color'] = color['blue']
+                n['rgba'] = color['blue']
 
             x = xc
             y = yc
 
         # circle 2
         elif n['color'] == 'red':
-            n['color'] = color['red']
+            n['rgba'] = color['red']
             x1 = circle_coordinates['circle2']['x1']
             x2 = circle_coordinates['circle2']['x2']
             y1 = circle_coordinates['circle2']['y1']
@@ -239,7 +239,7 @@ def node_position(node, centroid):
                         break
         # circle 3
         elif n['color'] == 'yellow':
-            n['color'] = color['yellow']
+            n['rgba'] = color['yellow']
             x1 = circle_coordinates['circle3']['x1']
             x2 = circle_coordinates['circle3']['x2']
             y1 = circle_coordinates['circle3']['y1']
@@ -270,7 +270,7 @@ def node_position(node, centroid):
 
          # circle 4 (outside)
         elif n['color'] == 'blue':
-            n['color'] = color['blue']
+            n['rgba'] = color['blue']
             x1 = circle_coordinates['circle4']['x1']
             x2 = circle_coordinates['circle4']['x2']
             y1 = circle_coordinates['circle4']['y1']

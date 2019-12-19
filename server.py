@@ -1,10 +1,11 @@
 import backend as backend
-from flask import Flask, render_template, url_for, request
+from flask import Flask, render_template, url_for, request, jsonify
 
 app = Flask(__name__)
-
+node = []
 @app.route('/', methods=['GET','POST'])
 def index():
+    global node
     if request.method == 'POST':
         input_keyword = request.form['symptoms'].split()
         symptoms = backend.check_keyword_exist(input_keyword)
@@ -21,9 +22,11 @@ def index():
 
 @app.route('/re_centroid', methods=['GET','POST'])
 def re_centroid():
-    data = request.form['centroid']
-    print(data)
-    return "hello"
+    global node
+    centroid = request.form['centroid']
+    node = backend.node_position(node, centroid)
+   
+    return jsonify({'node':node})
 
 if __name__ == "__main__":
     app.run(debug=True)

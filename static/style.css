@@ -126,3 +126,24 @@ td{
     border-color: rgb(240, 85, 28);
     border-width: 10px;
   }
+
+/*Node Hover*/
+div.tooltip {	
+    position: absolute;			
+    text-align: center;			
+    width: 400px;					
+    height: 400px;					
+    padding: 2px;				
+    font: 14px sans-serif;	font-weight: bold;	
+    color: rgb(240, 244, 247);
+    background: rgb(44, 129, 240);	
+    border: 0px;		
+    border-radius: 8px;			
+    	
+}
+iframe{
+    width: 400px;					
+    height: 400px;	
+    border: 0px;		
+    border-radius: 8px;	
+}

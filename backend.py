@@ -382,6 +382,15 @@ def create_graph_sp(disease, path, centroid):
                     check_edge.append(pair)
     
     return node, edge
+
+def document_content(node):
+    try:
+        doc = G.node[node]['document']
+        text_file = 'static/Wiki/'+doc
+        return text_file
+    except:
+        return None
+
 #keywords=['itch', 'cough','fever']
 #disease_hop_activate(keywords)
 #print(nx.dijkstra_path(G, 'malaria','chickenpox'))

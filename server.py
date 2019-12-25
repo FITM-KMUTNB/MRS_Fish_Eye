@@ -28,6 +28,13 @@ def re_centroid():
    
     return jsonify({'node':node})
 
+@app.route('/send_document', methods=['GET','POST'])
+def send_document():
+    over_node = request.form['over_node']
+    document = backend.document_content(over_node)
+    
+    return jsonify({'read':document})
+
 if __name__ == "__main__":
     app.run(debug=True)
     

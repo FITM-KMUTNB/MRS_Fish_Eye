@@ -89,23 +89,22 @@
 		var h = 550;
         var ptop = 70;
         var pright = 250;
-        var node = JSON.parse('{{ node|tojson }}')
-        
+ 
 		var dataset = {
-			nodes: node,
+			nodes:  JSON.parse('{{ node|tojson }}'),
 			edges: JSON.parse('{{ edge|tojson }}')
 		};
 		var force = d3.layout.force()
-								.nodes(dataset.nodes)
-								.links(dataset.edges)
-								.size([w, h])
-								.linkDistance([100])
-								.charge([-150])
-								.start();
-                                var node_drag = d3.behavior.drag()
-											.on("dragstart", dragstart)
-											.on("drag", dragmove)
-											.on("dragend", dragend);
+                    .nodes(dataset.nodes)
+                    .links(dataset.edges)
+                    .size([w, h])
+                    .linkDistance([100])
+                    .charge([-150])
+                    .start();
+        var node_drag = d3.behavior.drag()
+                    .on("dragstart", dragstart)
+                    .on("drag", dragmove)
+                    .on("dragend", dragend);
 
         function dragstart(d, i) {
 		    force.stop() // stops the force auto positioning before you start dragging
@@ -175,6 +174,7 @@
                         .attr("width", "100")
 						.attr("height", "100");
 
+      
 		var svg = d3.select("body")
 						.append("svg")
                         .style("position", "absolute")
@@ -187,17 +187,22 @@
         
 		var edges = svg.selectAll("line")
 						.data(dataset.edges)
-						.enter()
-						.append("line")
+						.enter().append("line")
 						.style("stroke", "white")
                         .style("stroke-opacity", .2)
                         .style("stroke-width", 1)
                         //.style("filter", "drop-shadow(0px 0px 2px rgb(15, 153, 217))")
 
+        // Define the div for the tooltip
+        var div = d3.select("body").append("div")	
+            .attr("class", "tooltip")
+            .on("mouseover", onContentBox)	
+            .on("mouseout", outContentBox)				
+            .style("opacity", 0);
+
 		var nodes = svg.selectAll("circle")
 						.data(dataset.nodes)
-						.enter()
-						.append("circle")
+				        .enter().append("circle")
                         .attr("r", 6)
                         .style("filter", function (d) {
                             return "drop-shadow(0px 0px 9px "+d.rgba+")";
@@ -209,9 +214,15 @@
                         .style("stroke-opacity", .5)
                         .style("stroke-width", 5)
                         .on("click", click)
+                        .on("mouseover", recieve_document)					
+                        .on("mouseout", function(d) {		
+                            div.transition()		
+                                .duration(2000)		
+                                .style("opacity", 0);	
+                        })
                         .call(node_drag);
             
-		var label = svg.selectAll(".mytext")
+		var label = svg.selectAll("text")
 						.data(dataset.nodes)
 						.enter()
 						.append("text")
@@ -224,18 +235,20 @@
 		
         force.on("tick", tick);
         function tick(){
-            edges.attr("x1", function(d) { return d.source.x; })
+            d3.selectAll('circle').attr("transform", function(d) { 
+                //console.log("translate("+d.name + d.x + "," + d.y + ")");
+                return "translate(" + (d.x) + "," + (d.y) + ")"; });
+            d3.selectAll('line')
+                .attr("x1", function(d) { return d.source.x; })
                 .attr("y1", function(d) { return d.source.y; })
                 .attr("x2", function(d) { return d.target.x; })
                 .attr("y2", function(d) { return d.target.y; });
-            nodes.attr("transform", function(d) { 
-                //console.log("translate("+d.name + d.x + "," + d.y + ")");
-                return "translate(" + (d.x) + "," + (d.y) + ")"; });
-            label.attr("x", function(d){ return d.x; })
+            
+            d3.selectAll('text').attr("x", function(d){ return d.x; })
                 .attr("y", function (d) {return d.y - 10; });
 
             
-        };
+        }
 
         function click(d){ 
             console.log(d.name)
@@ -251,21 +264,61 @@
                     console.log("Error")
                 }
                 else{
-                    d = data.node
-                    edges.attr("x1", function(d) { return d.source.x; })
-                        .attr("y1", function(d) { return d.source.y; })
-                        .attr("x2", function(d) { return d.target.x; })
-                        .attr("y2", function(d) { return d.target.y; });
-                    nodes.attr("transform", function(d) { 
-                        return "translate(" + (d.x) + "," + (d.y) + ")"; });
-                    label.attr("x", function(d){ return d.x; })
-                        .attr("y", function (d) {return d.y - 10; });
-               
+                    update_position = data.node
+                    nodes.each(function(n, i){
+                        n.px = update_position[i].x;
+                        n.py = update_position[i].y;
+                        n.x = update_position[i].x;
+                        n.y = update_position[i].y; 
+                    });
                     
                 }
 
             });
         }
+
+        function recieve_document(d){
+            console.log(d.name)
+         	  
+            $.ajax({
+                url: "/send_document",
+                type: "post", //send it through get method
+                data:{'over_node': d.name},
+               
+            })
+            .done(function(data){
+                if(data.error){
+                    console.log("Error")
+                }
+                else{
+                    console.log("Document of :"+data.read)
+                    div.transition()		
+                        .duration(500)		
+                        .style("opacity", .9);
+                    if(data.read != null){
+                        div.html("<iframe src='"+data.read+"'></iframe>");	
+                    }
+                    else{
+                	    div.html("No document for this node..");	
+                    }
+                    div.style("left", (d.x) + "px")		
+                        .style("top", (d.y - 28) + "px")
+                    
+                }
+
+            });
+        }
+        function onContentBox(){
+            div.transition()
+            .style("opacity", .9);		
+        }
+        function outContentBox(){
+            div.transition()		
+                    .duration(2000)		
+                    .style("opacity", 0);			
+        }
+        
+
 
 
     </script>

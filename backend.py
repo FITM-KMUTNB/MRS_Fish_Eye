@@ -21,6 +21,7 @@ def disease_hop_activate(keywords):
     node_count = dict()
     node_distance = []
     sum_distance = dict()
+    sum_path = dict()
     
     path = []
     for key in keywords:
@@ -49,8 +50,10 @@ def disease_hop_activate(keywords):
                     # sum distance to all keywords.
                     if neighbor in sum_distance:
                         sum_distance[neighbor] += node_distance[circle][neighbor]
+                        sum_path[neighbor] += 1
                     else:
                         sum_distance[neighbor] = node_distance[circle][neighbor]
+                        sum_path[neighbor] = 1
 
                 
                 # check intersect
@@ -73,7 +76,7 @@ def disease_hop_activate(keywords):
 
         current_hop += 1
     
-    return dict(sorted(disease.items(), key=operator.itemgetter(1))), dict(sorted(candidate.items(), key=operator.itemgetter(1))), path
+    return dict(sorted(disease.items(), key=operator.itemgetter(1))), dict(sorted(candidate.items(), key=operator.itemgetter(1))), path, sum_path
 
 
 def get2node_path(source, target):

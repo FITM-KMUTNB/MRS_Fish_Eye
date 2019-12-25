@@ -70,8 +70,8 @@
     <tr>
         <td > {{ count.value }}. </td>
         <td style="text-align:left; "> {{ disease }} </td>
-        <td style="text-align:left; "> {{ distance }} </td>
-        <td style="text-align:left; ">-</td>
+        <td style="text-align:left; "> {{ distance[0] }} </td>
+        <td style="text-align:left; "> {{ distance[1] }} </td>
     </tr>
         {% set count.value = count.value + 1 %}
     {% endfor %}
@@ -197,9 +197,10 @@
         var div = d3.select("body").append("div")	
             .attr("class", "tooltip")
             .on("mouseover", onContentBox)	
-            .on("mouseout", outContentBox)				
-            .style("opacity", 0);
-
+            .on("mouseout", outContentBox);
+        var display = false;
+        var countdown;
+        var delayInMilliseconds = 2000; // 1 second
 		var nodes = svg.selectAll("circle")
 						.data(dataset.nodes)
 				        .enter().append("circle")
@@ -215,10 +216,15 @@
                         .style("stroke-width", 5)
                         .on("click", click)
                         .on("mouseover", recieve_document)					
-                        .on("mouseout", function(d) {		
-                            div.transition()		
+                        .on("mouseout", function(d) {	
+                            countdown = setTimeout(function(){
+                                div.transition()		
                                 .duration(2000)		
-                                .style("opacity", 0);	
+                                .style("opacity", 0);
+                                display = false;
+                           
+                            }, delayInMilliseconds)	
+                            
                         })
                         .call(node_drag);
             
@@ -292,6 +298,8 @@
                 }
                 else{
                     console.log("Document of :"+data.read)
+                    display = true;
+                    clearTimeout(countdown)
                     div.transition()		
                         .duration(500)		
                         .style("opacity", .9);
@@ -309,13 +317,24 @@
             });
         }
         function onContentBox(){
-            div.transition()
-            .style("opacity", .9);		
+            clearTimeout(countdown)
+            if(display == true){
+                div.transition()
+                .style("opacity", .9);	
+
+            }
+            	
         }
         function outContentBox(){
-            div.transition()		
-                    .duration(2000)		
-                    .style("opacity", 0);			
+           
+            countdown = setTimeout(function(){
+                            div.transition()		
+                            .duration(2000)		
+                            .style("opacity", 0);
+                            display = false;
+                        
+                        }, delayInMilliseconds)	
+           	
         }
         
 

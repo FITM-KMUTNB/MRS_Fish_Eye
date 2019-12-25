@@ -9,8 +9,12 @@ def index():
     if request.method == 'POST':
         input_keyword = request.form['symptoms'].split()
         symptoms = backend.check_keyword_exist(input_keyword)
-        disease, centroid, path = backend.disease_hop_activate(symptoms)
-        n_disease = {k: disease[k] for k in list(disease.keys())[:10]}
+        disease, centroid, path, sum_path = backend.disease_hop_activate(symptoms)
+       
+        n_disease = dict()
+        for k in list(disease.keys())[:10]:
+            n_disease[k] = [disease[k], sum_path[k]]
+      
         centroid = list(n_disease)[0]
         print("Calculate centroid success!")
         sp_path = backend.centroid_shotest_path(n_disease, symptoms, centroid)

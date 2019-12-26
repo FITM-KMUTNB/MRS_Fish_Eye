@@ -105,7 +105,7 @@
                     .on("dragstart", dragstart)
                     .on("drag", dragmove)
                     .on("dragend", dragend);
-
+        var move = false;
         function dragstart(d, i) {
 		    force.stop() // stops the force auto positioning before you start dragging
 	    }
@@ -116,12 +116,17 @@
             d.x += d3.event.dx;
             d.y += d3.event.dy; 
             tick(); // this is the key to make it work together with updating both px,py,x,y on d !
+            move = true;
         }
 
         function dragend(d, i) {
             d.fixed = true; // of course set the node to fixed so the force doesn't include the node in its auto positioning stuff
             tick();
             force.resume();
+            setTimeout(function(){
+                move = false;
+            }, 1000)
+            
         }
 
         var circle4 = d3.select("body")
@@ -277,14 +282,16 @@
                     console.log("Error")
                 }
                 else{
-                    update_position = data.node
-                    nodes.each(function(n, i){
-                        n.px = update_position[i].x;
-                        n.py = update_position[i].y;
-                        n.x = update_position[i].x;
-                        n.y = update_position[i].y; 
-                    });
-                    
+                    console.log(move)
+                    if(!move){
+                        update_position = data.node
+                        nodes.each(function(n, i){
+                            n.px = update_position[i].x;
+                            n.py = update_position[i].y;
+                            n.x = update_position[i].x;
+                            n.y = update_position[i].y; 
+                        });
+                    }
                 }
 
             });
@@ -304,22 +311,24 @@
                     console.log("Error")
                 }
                 else{
-                    onNodetime=setTimeout(function(){
-                        console.log("Document of :"+data.read)
-                        display = true;
-                        clearTimeout(countdown)
-                        div.transition()		
-                            .duration(500)		
-                            .style("opacity", .9);
-                        if(data.read != null){
-                            div.html("<iframe src='"+data.read+"'></iframe>");	
-                        }
-                        else{
-                            div.html("<br><br><br><br><br> No document for this node..");	
-                        }
-                        div.style("left", (d.x) + "px")		
-                            .style("top", (d.y - 28) + "px")
-                    }, 2000)
+                    if(!move){
+                        onNodetime=setTimeout(function(){
+                            console.log("Document of :"+data.read)
+                            display = true;
+                            clearTimeout(countdown)
+                            div.transition()		
+                                .duration(500)		
+                                .style("opacity", .9);
+                            if(data.read != null){
+                                div.html("<iframe src='"+data.read+"'></iframe>");	
+                            }
+                            else{
+                                div.html("<br><br><br><br><br> No document for this node..");	
+                            }
+                            div.style("left", (d.x) + "px")		
+                                .style("top", (d.y - 28) + "px")
+                        }, 3000)
+                    }
                     
                     
                 }

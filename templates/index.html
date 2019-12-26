@@ -200,6 +200,7 @@
             .on("mouseout", outContentBox);
         var display = false;
         var countdown;
+        var onNodetime;
         var delayInMilliseconds = 2000; // 1 second
 		var nodes = svg.selectAll("circle")
 						.data(dataset.nodes)
@@ -215,15 +216,21 @@
                         .style("stroke-opacity", .5)
                         .style("stroke-width", 5)
                         .on("click", click)
-                        .on("mouseover", recieve_document)					
-                        .on("mouseout", function(d) {	
-                            countdown = setTimeout(function(){
+                        .on("mouseover", recieve_document)
+                      	.on("mouseout", function(d) {	
+                              if(display != true){
+                                clearTimeout(onNodetime);
+                              }
+                              else{
+                                countdown = setTimeout(function(){
                                 div.transition()		
                                 .duration(2000)		
                                 .style("opacity", 0);
                                 display = false;
                            
-                            }, delayInMilliseconds)	
+                                }, delayInMilliseconds)	
+                              }
+                                
                             
                         })
                         .call(node_drag);
@@ -297,20 +304,23 @@
                     console.log("Error")
                 }
                 else{
-                    console.log("Document of :"+data.read)
-                    display = true;
-                    clearTimeout(countdown)
-                    div.transition()		
-                        .duration(500)		
-                        .style("opacity", .9);
-                    if(data.read != null){
-                        div.html("<iframe src='"+data.read+"'></iframe>");	
-                    }
-                    else{
-                	    div.html("<br><br><br><br><br> No document for this node..");	
-                    }
-                    div.style("left", (d.x) + "px")		
-                        .style("top", (d.y - 28) + "px")
+                    onNodetime=setTimeout(function(){
+                        console.log("Document of :"+data.read)
+                        display = true;
+                        clearTimeout(countdown)
+                        div.transition()		
+                            .duration(500)		
+                            .style("opacity", .9);
+                        if(data.read != null){
+                            div.html("<iframe src='"+data.read+"'></iframe>");	
+                        }
+                        else{
+                            div.html("<br><br><br><br><br> No document for this node..");	
+                        }
+                        div.style("left", (d.x) + "px")		
+                            .style("top", (d.y - 28) + "px")
+                    }, 2000)
+                    
                     
                 }
 

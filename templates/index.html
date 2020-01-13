@@ -80,6 +80,7 @@
     
     <!-- End table result block-->
 
+
     <!-- Fish eye block-->
     <div id="block-eyefish">
     
@@ -198,15 +199,13 @@
                         .style("stroke-width", 1)
                         //.style("filter", "drop-shadow(0px 0px 2px rgb(15, 153, 217))")
 
-        // Define the div for the tooltip
-        var div = d3.select("body").append("div")	
-            .attr("class", "tooltip")
-            .on("mouseover", onContentBox)	
-            .on("mouseout", outContentBox);
-        var display = false;
-        var countdown;
-        var onNodetime;
-        var delayInMilliseconds = 2000; // 1 second
+        
+  
+        //Right click menu 
+        var menu = [
+                    'Info',
+                    ];
+
 		var nodes = svg.selectAll("circle")
 						.data(dataset.nodes)
 				        .enter().append("circle")
@@ -221,8 +220,43 @@
                         .style("stroke-opacity", .5)
                         .style("stroke-width", 5)
                         .on("click", click)
-                        .on("mouseover", recieve_document)
-                      	.on("mouseout", function(d) {	
+                        .on("contextmenu", function (d, i) { 
+                            // create the div element that will hold the context menu
+                            d3.selectAll('.context-menu')
+                                .data([1])
+                                .enter()
+                                .append('div')
+                                .attr('class', 'context-menu');
+                            // close menu
+                            d3.select('body').on('click.context-menu', function() {
+                            d3.select('.context-menu').style('display', 'none');
+                            });
+                            // this gets executed when a contextmenu event occurs
+                            d3.selectAll('.context-menu')
+                                .html('')
+                                .append('ul')
+                                .selectAll('li')
+                                .data(menu)
+                                .enter()
+                                .append('li')
+                                .text(function (d) {
+                                    return d;
+                                })
+                                .on('click', function() {
+                                    Document_box(d);
+                                    d3.select('.context-menu').style('display', 'none');
+                                });
+
+                            d3.select('.context-menu').style('display', 'none');
+                            // show the context menu
+                            d3.select('.context-menu')
+                                .style('left', (d3.event.pageX + 3) + 'px')
+                                .style('top', (d3.event.pageY - 2) + 'px')
+                                .style('display', 'block');
+                            d3.event.preventDefault();
+                        })
+                        //.on("mouseover", recieve_document)
+                      	/*.on("mouseout", function(d) {	
                               if(display != true){
                                 clearTimeout(onNodetime);
                               }
@@ -237,7 +271,7 @@
                               }
                                 
                             
-                        })
+                        })*/
                         .call(node_drag);
             
 		var label = svg.selectAll("text")
@@ -268,6 +302,7 @@
             
         }
 
+        // ************************* Click Change Centroid ****************************** 
         function click(d){ 
             console.log(d.name)
             
@@ -282,22 +317,22 @@
                     console.log("Error")
                 }
                 else{
-                    console.log(move)
-                    if(!move){
-                        update_position = data.node
-                        nodes.each(function(n, i){
-                            n.px = update_position[i].x;
-                            n.py = update_position[i].y;
-                            n.x = update_position[i].x;
-                            n.y = update_position[i].y; 
-                        });
-                    }
+                  
+                    update_position = data.node
+                    nodes.each(function(n, i){
+                        n.px = update_position[i].x;
+                        n.py = update_position[i].y;
+                        n.x = update_position[i].x;
+                        n.y = update_position[i].y; 
+                    });
+                    
                 }
 
             });
         }
 
-        function recieve_document(d){
+        // ************************* Display Node Document ****************************** 
+        function Document_box(d){
             console.log(d.name)
          	  
             $.ajax({
@@ -311,54 +346,33 @@
                     console.log("Error")
                 }
                 else{
-                    if(!move){
-                        onNodetime=setTimeout(function(){
-                            console.log("Document of :"+data.read)
-                            display = true;
-                            clearTimeout(countdown)
-                            div.transition()		
-                                .duration(500)		
-                                .style("opacity", .9);
-                            if(data.read != null){
-                                div.html("<iframe src='"+data.read+"'></iframe>");	
-                            }
-                            else{
-                                div.html("<br><br><br><br><br> No document for this node..");	
-                            }
-                            div.style("left", (d.x) + "px")		
-                                .style("top", (d.y - 28) + "px")
-                        }, 3000)
+                    console.log("Document of :"+data.read)
+                    // Define the div for the tooltip
+                    var div = d3.select("body").append("div")	
+                        .attr("class", "tooltip");
+                    div.transition()		
+                        .duration(500)		
+                        .style("opacity", .9);
+                    if(data.read != null){
+                        
+                        div.html("<span class='close' style='float:left; padding:1px;'  onclick='$(this).parent().remove();'>x</span><iframe src='"+data.read+"'></iframe>");	
                     }
-                    
-                    
+                    else{
+                        div.html("<br><br><br><br><br> No document for this node..");	
+                    }
+                    div.style("left", (d.x) + "px")		
+                        .style("top", (d.y - 28) + "px")
+              
+                            
                 }
 
             });
         }
-        function onContentBox(){
-            clearTimeout(countdown)
-            if(display == true){
-                div.transition()
-                .style("opacity", .9);	
 
-            }
-            	
-        }
-        function outContentBox(){
-           
-            countdown = setTimeout(function(){
-                            div.transition()		
-                            .duration(2000)		
-                            .style("opacity", 0);
-                            display = false;
-                        
-                        }, delayInMilliseconds)	
-           	
-        }
+       
+       
         
-
-
-
+     
     </script>
     </div>
     <!-- End fish eye block -->

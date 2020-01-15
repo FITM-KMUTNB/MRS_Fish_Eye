@@ -188,7 +188,8 @@
                         .style("right", (pright)+"px")
                         .style("border-radius", "100%")
                         .attr("width", w)
-						.attr("height", h);
+						.attr("height", h)
+                        ;
 
         
 		var edges = svg.selectAll("line")
@@ -356,10 +357,12 @@
                         .style("opacity", 1);
                     if(data.read != null){
                         
-                        div.html("<span class='close' style='padding:1px;'  onclick='$(this).parent().remove();'>x</span><iframe src='"+data.read+"' style=' width: 610px; height: 580px;'></iframe>");	
+                        div.html("<span class='close' style='padding:3px;'  onclick='$(this).parent().remove();'>x</span>"+
+                                "<iframe src='"+data.read+"' style=' width: 610px; height: 580px;'></iframe>");	
                     }
                     else{
-                        div.html("<span class='close' style='padding:1px;'  onclick='$(this).parent().remove();'>x</span><br><br><br><br><br> No document for this node..");	
+                        div.html("<span class='close' style='padding:3px;'  onclick='$(this).parent().remove();'>x</span>"+
+                                "<br><br><br><br><br><br><br><br><br><br><br><br><br><br> No document for this node..");	
                     }
                     //div.style("left", (d.x) + "px")		
                     //    .style("top", (d.y - 28) + "px")

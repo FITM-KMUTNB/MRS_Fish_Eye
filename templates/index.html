@@ -349,19 +349,22 @@
                     console.log("Document of :"+data.read)
                     // Define the div for the tooltip
                     var div = d3.select("body").append("div")	
-                        .attr("class", "tooltip");
+                        .attr("class", "tooltip")
+                        .style("width", 610 +"px")
+						.style("height", 610 +"px");;
                     div.transition()		
-                        .duration(500)		
-                        .style("opacity", .9);
+                        .style("opacity", 1);
                     if(data.read != null){
                         
-                        div.html("<span class='close' style='float:left; padding:1px;'  onclick='$(this).parent().remove();'>x</span><iframe src='"+data.read+"'></iframe>");	
+                        div.html("<span class='close' style='padding:1px;'  onclick='$(this).parent().remove();'>x</span><iframe src='"+data.read+"' style=' width: 610px; height: 580px;'></iframe>");	
                     }
                     else{
-                        div.html("<br><br><br><br><br> No document for this node..");	
+                        div.html("<span class='close' style='padding:1px;'  onclick='$(this).parent().remove();'>x</span><br><br><br><br><br> No document for this node..");	
                     }
-                    div.style("left", (d.x) + "px")		
-                        .style("top", (d.y - 28) + "px")
+                    //div.style("left", (d.x) + "px")		
+                    //    .style("top", (d.y - 28) + "px")
+                    div.style("right", 20 + "px")		
+                        .style("top", 10 + "px")
               
                             
                 }

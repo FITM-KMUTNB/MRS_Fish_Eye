@@ -66,7 +66,7 @@ def disease_hop_activate(keywords):
                     # if found node intersect, calculate average distance.
                     if node_count[neighbor] == len(keywords):
                         candidate[neighbor] = sum_distance[neighbor] / len(keywords)
-                        if G.node[neighbor]['tag'] == 'DS':
+                        if G.node[neighbor]['tag'] == 'DS' or G.node[neighbor]['tag'] == 'DT':
                             disease[neighbor] = float(format(sum_distance[neighbor] / len(keywords) , '.4f'))
             
                 else:
@@ -389,6 +389,8 @@ def create_graph_sp(disease, path, centroid):
 def document_content(node):
     try:
         doc = G.node[node]['document']
+        if "'s" in doc:
+            doc = doc.replace("'s", "")
         text_file = 'static/Wiki/'+doc
         return text_file
     except:

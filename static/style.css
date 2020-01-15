@@ -129,24 +129,15 @@ td{
 
 /*Node Hover*/
 div.tooltip {	
-    position: absolute;			
+    position: absolute;		
     text-align: center;			
-    width: 400px;					
-    height: 400px;					
-    padding: 2px;				
+   	padding: 2px;				
     font: 14px sans-serif;	font-weight: bold;	
     color: rgb(240, 244, 247);
     background: rgb(44, 129, 240);	
     border: 0px;		
     border-radius: 8px;			
     	
-}
-iframe{
-    padding: 3px;
-    width: 380px;					
-    height: 400px;	
-    border: 0px;		
-    
 }
 
 /*Right click on node and show menu*/

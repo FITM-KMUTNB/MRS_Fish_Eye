@@ -188,11 +188,16 @@
                         .style("right", (pright)+"px")
                         .style("border-radius", "100%")
                         .attr("width", w)
-						.attr("height", h)
-                        ;
+						.attr("height", h);
 
-        
-		var edges = svg.selectAll("line")
+        var zoomContainer = svg.call(d3.behavior.zoom().on("zoom", function () {
+                                zoomContainer.attr("transform",
+                                                "translate(" + d3.event.translate + ")"
+                                                + " scale(" + d3.event.scale + ")");
+                            }))
+                            .append("g");
+                            
+		var edges = zoomContainer.selectAll("line")
 						.data(dataset.edges)
 						.enter().append("line")
 						.style("stroke", "white")
@@ -207,7 +212,7 @@
                     'Info',
                     ];
 
-		var nodes = svg.selectAll("circle")
+		var nodes = zoomContainer.selectAll("circle")
 						.data(dataset.nodes)
 				        .enter().append("circle")
                         .attr("r", 6)
@@ -275,7 +280,7 @@
                         })*/
                         .call(node_drag);
             
-		var label = svg.selectAll("text")
+		var label = zoomContainer.selectAll("text")
 						.data(dataset.nodes)
 						.enter()
 						.append("text")
@@ -285,7 +290,8 @@
 					    .style("font-family", "Arial")
 					    .style("font-size", 12);
                         
-		
+	
+        //Node and edge position
         force.on("tick", tick);
         function tick(){
             d3.selectAll('circle').attr("transform", function(d) { 
@@ -374,16 +380,26 @@
 
             });
         }
-
        
-       
-        
      
     </script>
     </div>
     <!-- End fish eye block -->
+    
+
+    <!-- Slider for adjust edge value-->
+    <!--
+    <div id="slider-box">
+        <input type="range" class="edgeslider" style="transform: rotate(270deg); -moz-transform: rotate(270deg); margin-right: 20px;">
     </div>
-    {% endif %}
+    -->
+    <!-- End Slider -->
+
+</div>
+<!-- End Main box -->
+
+    
+{% endif %}
 </body>
 
 </html>

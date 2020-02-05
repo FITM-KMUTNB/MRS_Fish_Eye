@@ -45,11 +45,14 @@
             Symptoms
         </p>
         </div>
-        <ul class="symp-list">
-            {% for symp in symptoms %}
-                <li>{{symp}}</li>
-            {% endfor %}
+        <!-- Display symptoms list -->
+        <ul class="symplist" id="symtomslist">
         </ul> 
+
+        <input class="symptominput-list" type="text" id="symptomitem"> 
+        <button class="symptomaddbtn" id="addsymptom">Add</button>
+        <div align="center"><button class="symptomsubmitbtn" onclick="centroid_calculation()">Submit</button></div>
+        
     </div>
     <!-- Table result block-->
     <div id="block-result">
@@ -77,7 +80,7 @@
         <td style="text-align:left; "> {{ disease }} </td>
         <td style="text-align:left; "> {{ distance[0] }} </td>
         <td style="text-align:left; "> {{ distance[1] }} </td>
-        <td style="text-align:center; "><button class="symptombtn" onclick="get_node_symptoms({name:'{{ disease }}'})">Button</button></td>
+        <td style="text-align:center; "><button class="symptombtn" onclick="get_node_symptoms({name:'{{ disease }}'})">Show</button></td>
     </tr>
         {% set count.value = count.value + 1 %}
     {% endfor %}
@@ -96,6 +99,7 @@
 		var h = 550;
         var ptop = 70;
         var pright = 250;
+        var symptomlist = JSON.parse('{{ symptoms|tojson }}');
  		var dataset = {
 			nodes:  JSON.parse('{{ node|tojson }}'),
 			edges: JSON.parse('{{ edge|tojson }}')
@@ -116,7 +120,9 @@
                     'Info',
                     'Node Symptoms',
                     ];
-
+        var list = [];
+        var ullist = document.getElementById('symtomslist');
+        var add = document.getElementById('addsymptom');
         function graph_background(){
             
             circle4 = d3.select("body")
@@ -438,8 +444,65 @@
                 }
             });
         }
+        
+        function get_symptomslist(){
+            for(symp of symptomlist){
+                var newElement = document.createElement('LI');
+                list.push(symp);
+                ullist.appendChild(newElement);
+                newElement.setAttribute('rel', symp);
+                newElement.innerHTML= symp+"<button class='sympclosebtn'>X</button>";
+            }
+
+        }
+        
+        function centroid_calculation(){
+            $.ajax({
+                url: "/",
+                type: "post", //send it through get method
+                data:JSON.stringify({'symptoms': list}),
+                contentType: "application/json; charset=utf-8",
+                success: function (data, textStatus, jqXHR) {
+                    $("body").html(data);
+                }
+            })
+        }
+        get_symptomslist()
         graph_background();
         create_graph();
+          
+
+        // ************************* Symptom Add/Remove list ********************************** 
+       
+        //adding a new element to the list
+        add.addEventListener('click', function(){
+            var newElement = document.createElement('LI');
+            var item = document.getElementById('symptomitem');
+
+            list.push(item.value);
+
+            ullist.appendChild(newElement);
+            newElement.setAttribute('rel', item.value);
+            newElement.innerHTML= item.value+"<button class='sympclosebtn'>X</button>";
+            item.value = '';
+         
+
+        });
+        //remove a element
+        ullist.addEventListener('click', function(e){
+        if(e.target && e.target.nodeName == "BUTTON") {
+            
+            // Remove element in list
+            const removeindex = list.indexOf(e.target.parentNode.getAttribute('rel'));
+            if (removeindex > -1) {
+                list.splice(removeindex, 1);
+            }
+
+            // Remove element in ul.
+            e.target.parentNode.remove();
+           
+            }
+        });
         
     </script>
     </div>

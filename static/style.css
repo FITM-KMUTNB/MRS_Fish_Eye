@@ -59,6 +59,7 @@
 
 /* symptoms block */
 #symptoms-block{
+    display: block;
     position: relative;
     margin-left: 10px;
     width: 383px;
@@ -70,10 +71,66 @@
   
 }
 
-.symp-list{
+.symplist{
     color: rgb(156, 204, 236);
 }
 
+
+.sympclosebtn {
+    border-radius: 100px;
+    font-size: 10px;
+    border: none;
+    position: absolute;
+    right: 5%;
+    font-weight: bold;
+    color: rgb(235, 247, 255);
+    background-color: rgb(5, 100, 163);
+    
+  }
+  
+.sympclosebtn:hover {
+    color: rgb(5, 100, 163);
+    background: rgb(156, 204, 236);
+
+    
+}
+
+.symptominput-list{
+    margin-left: 40px;
+    background-color: rgb(42, 76, 126,.5);
+    border: none;
+    border-radius: 3px;
+    width: 250px;
+    color:rgb(156, 204, 236);
+}
+.symptomaddbtn{
+    background: rgb(1, 103, 185,.5);
+    padding: 4px 6px;
+    font-size: 12px;
+    border: none;
+    border-radius: 15%;
+    color: white;
+    font-weight: bold;
+}
+.symptomaddbtn:hover{
+    color: rgb(5, 100, 163);
+    background: rgb(156, 204, 236);
+}
+.symptomsubmitbtn{
+    margin: 0 auto;
+    background: rgb(1, 103, 185,.5);
+    padding: 4px 6px;
+    font-size: 12px;
+    border: none;
+    border-radius: 15%;
+    color: white;
+    font-weight: bold;
+}
+
+.symptomsubmitbtn:hover {
+    color: rgb(5, 100, 163);
+    background: rgb(156, 204, 236);
+}
 /* Result Table */
 
 table {
@@ -190,7 +247,7 @@ div.tooltip {
     padding: 4px 6px;
     font-size: 12px;
     border: none;
-    border-radius: 25%;
+    border-radius: 15%;
     color: white;
     font-weight: bold;
     

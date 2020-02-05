@@ -6,22 +6,30 @@ app = Flask(__name__)
 node = []
 edge = []
 n_dsease = dict()
-
+symptoms = []
 @app.route('/', methods=['GET','POST'])
 def index():
     global node
     global edge
     global n_disease
+    global symptoms
 
     if request.method == 'POST':
-        input_keyword = request.form['symptoms'].split()
+        input_keyword = None
+        if request.get_json():
+            data = request.get_json()
+            input_keyword = data['symptoms']
+           
+        else:
+            input_keyword = request.form['symptoms'].split()
+            
         symptoms = backend.check_keyword_exist(input_keyword)
         disease, centroid, path, sum_path = backend.disease_hop_activate(symptoms)
-       
+    
         n_disease = dict()
         for k in list(disease.keys())[:10]:
             n_disease[k] = [disease[k], sum_path[k]]
-      
+    
         centroid = list(n_disease)[0]
         print("Calculate centroid success!")
         sp_path = backend.centroid_shotest_path(n_disease, symptoms, centroid)

@@ -2,10 +2,17 @@ import backend as backend
 from flask import Flask, render_template, url_for, request, jsonify
 
 app = Flask(__name__)
+
 node = []
+edge = []
+n_dsease = dict()
+
 @app.route('/', methods=['GET','POST'])
 def index():
     global node
+    global edge
+    global n_disease
+
     if request.method == 'POST':
         input_keyword = request.form['symptoms'].split()
         symptoms = backend.check_keyword_exist(input_keyword)
@@ -23,7 +30,7 @@ def index():
         return render_template('index.html', symptoms = symptoms, diseases = n_disease, node = node, edge=edge)
     else:
         return render_template('index.html')
-
+"""
 @app.route('/re_centroid', methods=['GET','POST'])
 def re_centroid():
     global node
@@ -31,6 +38,7 @@ def re_centroid():
     node = backend.node_position(node, centroid)
    
     return jsonify({'node':node})
+"""
 
 @app.route('/send_document', methods=['GET','POST'])
 def send_document():
@@ -38,7 +46,18 @@ def send_document():
     document = backend.document_content(over_node)
     
     return jsonify({'read':document})
+    
+@app.route('/node_symptoms', methods=['GET','POST'])
+def node_symptoms():
+    get_node = request.form['node']
+    graph_node, graph_edge =  backend.node_symptoms_graph(get_node)
+    return jsonify({'nodes':graph_node, 'edges':graph_edge})
 
+@app.route('/centroid_graph', methods=['GET','POST'])
+def centroid_graph():
+    
+    return jsonify({'nodes':node, 'edges':edge})
+    
 if __name__ == "__main__":
     app.run(debug=True)
     

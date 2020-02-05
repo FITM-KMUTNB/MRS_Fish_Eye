@@ -181,3 +181,39 @@ div.tooltip {
     transform: rotate(270deg);
     -moz-transform: rotate(270deg); /*do same for other browsers if required*/
   }
+
+
+  /* Symptoms button */
+.symptombtn {
+       
+    background: rgb(1, 103, 185,.5);
+    padding: 4px 6px;
+    font-size: 12px;
+    border: none;
+    border-radius: 25%;
+    color: white;
+    font-weight: bold;
+    
+  }
+  
+.symptombtn:hover {
+    background-color: rgba(255, 255, 255);
+    color: rgb(0, 114, 228);
+
+}
+.centroidbtn{
+    float: right;
+    background: rgb(1, 103, 185,.5);
+    padding: 3px;
+    font-size: 12px;
+    border: none;
+   
+    color: rgb(243, 126, 47);
+    font-weight: bold;
+    
+  }
+  .centroidbtn:hover {
+    background-color: rgba(255, 255, 255);
+    color: rgb(0, 114, 228);
+
+}

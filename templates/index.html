@@ -2,10 +2,12 @@
 <html>
 <head>
     <title>TMRS</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="//code.jquery.com/jquery-1.11.1.min.js"></script>
     <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
     <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>
-    <script src="//code.jquery.com/jquery-1.11.1.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    
+    
 </head>
 
 <body class="background">
@@ -53,10 +55,12 @@
     <div id="block-result">
     <table>
     <tr>
-        <th style="padding: 10px;" colspan="4">
+        <th style="padding: 10px;" colspan="5">
             <p style="border:1px; border-style:solid; border-color:rgb(15, 153, 217); padding: 4px; color: #e8ebee;">
-                Diagnosis Recommendation
+                Centroid Calculation
+                <button class="centroidbtn" onclick="centroid_graph()">Centroid</button>
             </p>
+            
         </th>
     </tr>
     <tr>
@@ -64,6 +68,7 @@
         <td style="text-align:left; font-size: 10pt;">Name</td>
         <td style="text-align:left; font-size: 10pt;">Distance</td>
         <td style="text-align:left; font-size: 10pt;">Hop</td>
+        <td style="text-align:left; font-size: 10pt;">Symptoms</td>
     </tr>
     {% set count = namespace(value=1) %}
     {% for disease, distance in diseases.items() %}
@@ -72,6 +77,7 @@
         <td style="text-align:left; "> {{ disease }} </td>
         <td style="text-align:left; "> {{ distance[0] }} </td>
         <td style="text-align:left; "> {{ distance[1] }} </td>
+        <td style="text-align:center; "><button class="symptombtn" onclick="get_node_symptoms({name:'{{ disease }}'})">Button</button></td>
     </tr>
         {% set count.value = count.value + 1 %}
     {% endfor %}
@@ -90,47 +96,30 @@
 		var h = 550;
         var ptop = 70;
         var pright = 250;
- 
-		var dataset = {
+ 		var dataset = {
 			nodes:  JSON.parse('{{ node|tojson }}'),
 			edges: JSON.parse('{{ edge|tojson }}')
 		};
-		var force = d3.layout.force()
-                    .nodes(dataset.nodes)
-                    .links(dataset.edges)
-                    .size([w, h])
-                    .linkDistance([100])
-                    .charge([-150])
-                    .start();
-        var node_drag = d3.behavior.drag()
-                    .on("dragstart", dragstart)
-                    .on("drag", dragmove)
-                    .on("dragend", dragend);
-        var move = false;
-        function dragstart(d, i) {
-		    force.stop() // stops the force auto positioning before you start dragging
-	    }
+        var force;
+        var node_drag;
+        var circle4;
+        var circle3;
+        var circle2;
+        var circle1;
+        var svg;
+        var zoomContainer;
+        var edges;
+        var nodes;
+        var label;
+        //Right click menu 
+        var menu = [
+                    'Info',
+                    'Node Symptoms',
+                    ];
 
-        function dragmove(d, i) {
-            d.px += d3.event.dx;
-            d.py += d3.event.dy;
-            d.x += d3.event.dx;
-            d.y += d3.event.dy; 
-            tick(); // this is the key to make it work together with updating both px,py,x,y on d !
-            move = true;
-        }
-
-        function dragend(d, i) {
-            d.fixed = true; // of course set the node to fixed so the force doesn't include the node in its auto positioning stuff
-            tick();
-            force.resume();
-            setTimeout(function(){
-                move = false;
-            }, 1000)
+        function graph_background(){
             
-        }
-
-        var circle4 = d3.select("body")
+            circle4 = d3.select("body")
 						.append("svg")
                         .style("position", "absolute")
                         .style("top", (ptop)+"px")
@@ -141,7 +130,7 @@
                         .attr("width", w)
 						.attr("height",h);
 
-        var circle3 = d3.select("body")
+            circle3 = d3.select("body")
 						.append("svg")
                         .style("position", "absolute")
                         .style("top", (ptop+75)+"px")
@@ -154,7 +143,7 @@
                         .attr("width", "400")
 						.attr("height", "400");
 
-        var circle2 = d3.select("body")
+            circle2 = d3.select("body")
 						.append("svg")
                         .style("position", "absolute")
                         .style("top", (ptop+125)+"px")
@@ -166,8 +155,8 @@
                         .style("border-width", "3px")
                         .attr("width", "300")
 						.attr("height", "300");
-        
-        var circle1 = d3.select("body")
+
+            circle1 = d3.select("body")
 						.append("svg")
                         .style("position", "absolute")
                         .style("top", (ptop+225)+"px")
@@ -179,9 +168,7 @@
                         .style("border-width", "5px")
                         .attr("width", "100")
 						.attr("height", "100");
-
-      
-		var svg = d3.select("body")
+            svg = d3.select("body")
 						.append("svg")
                         .style("position", "absolute")
                         .style("top", (ptop)+"px")
@@ -189,15 +176,30 @@
                         .style("border-radius", "100%")
                         .attr("width", w)
 						.attr("height", h);
+        }
+        function create_graph(){
 
-        var zoomContainer = svg.call(d3.behavior.zoom().on("zoom", function () {
+            force = d3.layout.force()
+                    .nodes(dataset.nodes)
+                    .links(dataset.edges)
+                    .size([w, h])
+                    .linkDistance([100])
+                    .charge([-150])
+                    .start();
+
+            node_drag = d3.behavior.drag()
+                    .on("dragstart", dragstart)
+                    .on("drag", dragmove)
+                    .on("dragend", dragend);
+
+            zoomContainer = svg.call(d3.behavior.zoom().on("zoom", function () {
                                 zoomContainer.attr("transform",
                                                 "translate(" + d3.event.translate + ")"
                                                 + " scale(" + d3.event.scale + ")");
                             }))
                             .append("g");
                             
-		var edges = zoomContainer.selectAll("line")
+		    edges = svg.selectAll("line")
 						.data(dataset.edges)
 						.enter().append("line")
 						.style("stroke", "white")
@@ -205,14 +207,7 @@
                         .style("stroke-width", 1)
                         //.style("filter", "drop-shadow(0px 0px 2px rgb(15, 153, 217))")
 
-        
-  
-        //Right click menu 
-        var menu = [
-                    'Info',
-                    ];
-
-		var nodes = zoomContainer.selectAll("circle")
+            nodes = svg.selectAll("circle")
 						.data(dataset.nodes)
 				        .enter().append("circle")
                         .attr("r", 6)
@@ -225,7 +220,7 @@
                         })
                         .style("stroke-opacity", .5)
                         .style("stroke-width", 5)
-                        .on("click", click)
+                        //.on("click", click)
                         .on("contextmenu", function (d, i) { 
                             // create the div element that will hold the context menu
                             d3.selectAll('.context-menu')
@@ -248,8 +243,14 @@
                                 .text(function (d) {
                                     return d;
                                 })
-                                .on('click', function() {
-                                    Document_box(d);
+                                .on('click', function(clickmenu) {
+                                    if(clickmenu == 'Info'){
+                                        Document_box(d);
+                                    }
+                                    else if(clickmenu == 'Node Symptoms'){
+                                        get_node_symptoms(d);
+                                    }
+                                    
                                     d3.select('.context-menu').style('display', 'none');
                                 });
 
@@ -260,27 +261,10 @@
                                 .style('top', (d3.event.pageY - 2) + 'px')
                                 .style('display', 'block');
                             d3.event.preventDefault();
-                        })
-                        //.on("mouseover", recieve_document)
-                      	/*.on("mouseout", function(d) {	
-                              if(display != true){
-                                clearTimeout(onNodetime);
-                              }
-                              else{
-                                countdown = setTimeout(function(){
-                                div.transition()		
-                                .duration(2000)		
-                                .style("opacity", 0);
-                                display = false;
-                           
-                                }, delayInMilliseconds)	
-                              }
-                                
-                            
-                        })*/
+                        })                    
                         .call(node_drag);
             
-		var label = zoomContainer.selectAll("text")
+		    label = svg.selectAll("text")
 						.data(dataset.nodes)
 						.enter()
 						.append("text")
@@ -289,10 +273,31 @@
 					    .style("fill", "rgb(156, 204, 236)")
 					    .style("font-family", "Arial")
 					    .style("font-size", 12);
-                        
+            
+            force.on("tick", tick);
+        }
 	
+        function dragstart(d, i) {
+		    force.stop() // stops the force auto positioning before you start dragging
+	    }
+
+        function dragmove(d, i) {
+            d.px += d3.event.dx;
+            d.py += d3.event.dy;
+            d.x += d3.event.dx;
+            d.y += d3.event.dy; 
+            tick(); // this is the key to make it work together with updating both px,py,x,y on d !
+        
+        }
+
+        function dragend(d, i) {
+            d.fixed = true; // of course set the node to fixed so the force doesn't include the node in its auto positioning stuff
+            tick();
+            force.resume();
+                   
+        }
+           
         //Node and edge position
-        force.on("tick", tick);
         function tick(){
             d3.selectAll('circle').attr("transform", function(d) { 
                 //console.log("translate("+d.name + d.x + "," + d.y + ")");
@@ -340,7 +345,7 @@
 
         // ************************* Display Node Document ****************************** 
         function Document_box(d){
-            console.log(d.name)
+            //console.log(d.name)
          	  
             $.ajax({
                 url: "/send_document",
@@ -353,12 +358,14 @@
                     console.log("Error")
                 }
                 else{
-                    console.log("Document of :"+data.read)
+                    //console.log("Document of :"+data.read)
+                    
                     // Define the div for the tooltip
                     var div = d3.select("body").append("div")	
                         .attr("class", "tooltip")
                         .style("width", 610 +"px")
-						.style("height", 610 +"px");;
+						.style("height", 610 +"px");
+                   
                     div.transition()		
                         .style("opacity", 1);
                     if(data.read != null){
@@ -374,14 +381,66 @@
                     //    .style("top", (d.y - 28) + "px")
                     div.style("right", 20 + "px")		
                         .style("top", 10 + "px")
-              
+             
                             
                 }
 
             });
         }
-       
-     
+
+        // ************************* Get node symptoms ********************************** 
+        function get_node_symptoms(d){
+            
+            $.ajax({
+                url: "/node_symptoms",
+                type: "post", //send it through get method
+                data:{'node': d.name},
+               
+            })
+            .done(function(data){
+                if(data.error){
+                    console.log("Error")
+                }
+                else{
+                    console.log("Get symptoms")
+                    remove_graph()
+                    dataset = {
+                        nodes: data.nodes,
+                        edges: data.edges
+                    };
+                    create_graph();
+                }
+            });
+        }
+        
+        function remove_graph(){
+            nodes.remove();
+            edges.remove();
+            label.remove();
+        }
+
+        function centroid_graph(){
+            $.ajax({
+                url: "/centroid_graph"
+               
+            })
+            .done(function(data){
+                if(data.error){
+                    console.log("Error")
+                }
+                else{
+                    remove_graph()
+                    dataset = {
+                        nodes: data.nodes,
+                        edges: data.edges
+                    };
+                    create_graph();
+                }
+            });
+        }
+        graph_background();
+        create_graph();
+        
     </script>
     </div>
     <!-- End fish eye block -->

@@ -396,6 +396,63 @@ def document_content(node):
     except:
         return None
 
+
+def node_symptoms_graph(node):
+
+    path = nx.single_source_dijkstra_path(G, node, weight='cost')
+    closest_symptoms = dict()
+    limit = 10
+
+    # store first closest 10 symptoms
+    for p in path:
+        if G.node[p]['tag'] == 'ST':
+            closest_symptoms[p] = path[p]
+        if len(closest_symptoms) >= limit:
+            break
+
+    #D3 Graph variable
+    # Node variable
+    graph_node = []
+    node_index=dict()
+    index_id = 0
+    #  closest_symptoms = {'s':['n1','n2']}
+    for c in closest_symptoms:
+
+        #  closest_symptoms[c] = ['n1','n2']
+        for cvalue in closest_symptoms[c]:
+
+            if cvalue not in node_index:
+                color= None
+                if G.node[cvalue]['tag'] == 'DS' or G.node[cvalue]['tag'] == 'DT':
+                    color = 'red'
+                elif G.node[cvalue]['tag'] == 'ST':
+                    color = 'yellow'
+                else :
+                    color = 'blue'
+                node_index[cvalue] = index_id
+                graph_node.append({'name': cvalue , 'color':color})
+                index_id += 1
+
+    #   set node postition (x, y)
+    centroid = node
+    graph_node = node_position(graph_node, centroid)
+
+    # Edge variable
+    graph_edge = []
+    check_edge = [] # for check if edge already exist.
+    # iterate path
+    for c in closest_symptoms:
+        p = closest_symptoms[c]
+   
+        for source in range(len(p)):
+            for target in range(source + 1, len(p)):
+                pair = sorted([p[source], p[target]])
+                if pair not in check_edge:
+                    graph_edge.append({'source' : node_index[p[source]], 'target' :  node_index[p[target]]})
+                    check_edge.append(pair)
+                    
+    return graph_node, graph_edge
+
 #keywords=['itch', 'cough','fever']
 #disease_hop_activate(keywords)
 #print(nx.dijkstra_path(G, 'malaria','chickenpox'))

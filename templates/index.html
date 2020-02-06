@@ -118,7 +118,8 @@
         //Right click menu 
         var menu = [
                     'Info',
-                    'Node Symptoms',
+                    'Add symptom',
+                    'Node symptoms',
                     ];
         var list = [];
         var ullist = document.getElementById('symtomslist');
@@ -253,8 +254,11 @@
                                     if(clickmenu == 'Info'){
                                         Document_box(d);
                                     }
-                                    else if(clickmenu == 'Node Symptoms'){
+                                    else if(clickmenu == 'Node symptoms'){
                                         get_node_symptoms(d);
+                                    }
+                                    else if(clickmenu == 'Add symptom'){
+                                        add_symptom(d);
                                     }
                                     
                                     d3.select('.context-menu').style('display', 'none');
@@ -462,29 +466,46 @@
                 type: "post", //send it through get method
                 data:JSON.stringify({'symptoms': list}),
                 contentType: "application/json; charset=utf-8",
-                success: function (data, textStatus, jqXHR) {
-                    $("body").html(data);
+                success: function (response) {
+                    $("body").html(response);
                 }
             })
         }
         get_symptomslist()
         graph_background();
         create_graph();
-          
+
+        function add_symptom(d){
+            var newElement = document.createElement('LI');
+            if(d != 0){
+                if(!list.includes(d.name)){
+                    list.push(d.name);
+                    ullist.appendChild(newElement);
+                    newElement.setAttribute('rel', d.name);
+                    newElement.innerHTML= d.name+"<button class='sympclosebtn'>X</button>";
+                }
+               
+            }
+            else{
+                var item = document.getElementById('symptomitem');
+                if(!list.includes(item.value)){
+                    list.push(item.value);
+                    ullist.appendChild(newElement);
+                    newElement.setAttribute('rel', item.value);
+                    newElement.innerHTML= item.value+"<button class='sympclosebtn'>X</button>";
+                    
+                }
+                item.value = '';
+            }
+            
+
+        } 
 
         // ************************* Symptom Add/Remove list ********************************** 
        
         //adding a new element to the list
         add.addEventListener('click', function(){
-            var newElement = document.createElement('LI');
-            var item = document.getElementById('symptomitem');
-
-            list.push(item.value);
-
-            ullist.appendChild(newElement);
-            newElement.setAttribute('rel', item.value);
-            newElement.innerHTML= item.value+"<button class='sympclosebtn'>X</button>";
-            item.value = '';
+            add_symptom(0)
          
 
         });

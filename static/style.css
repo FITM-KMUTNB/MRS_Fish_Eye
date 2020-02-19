@@ -274,3 +274,16 @@ div.tooltip {
     color: rgb(0, 114, 228);
 
 }
+
+
+/*Circle background*/
+#circle4{
+    position: absolute;
+    top: 20px;
+    right: 200px;
+    border-radius: 50%;
+    height: 550px;
+    width: 550px;
+    background: rgb(161, 157, 157,0.1);
+    
+}

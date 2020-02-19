@@ -78,7 +78,6 @@ def disease_hop_activate(keywords):
     
     return dict(sorted(disease.items(), key=operator.itemgetter(1))), dict(sorted(candidate.items(), key=operator.itemgetter(1))), path, sum_path
 
-
 def get2node_path(source, target):
     activate_node = [source]
     node_path = {source:[source]}

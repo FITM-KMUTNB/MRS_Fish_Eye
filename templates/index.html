@@ -20,7 +20,7 @@
         <form action ="/" method="POST">
         <div id="custom-search-input">
         <div class="input-group col-md-12">
-            <input type="text" name="symptoms" class="search-query form-control" placeholder="Search" />
+            <input type="text" name="symptoms" class="search-query form-control" placeholder="Search" required/>
             <span class="input-group-btn">
             <button class="btn btn-danger" type="submit">
             <span class=" glyphicon glyphicon-search"></span>
@@ -56,35 +56,9 @@
     </div>
     <!-- Table result block-->
     <div id="block-result">
-    <table>
-    <tr>
-        <th style="padding: 10px;" colspan="5">
-            <p style="border:1px; border-style:solid; border-color:rgb(15, 153, 217); padding: 4px; color: #e8ebee;">
-                Centroid Calculation
-                <button class="centroidbtn" onclick="centroid_graph()">Centroid</button>
-            </p>
-            
-        </th>
-    </tr>
-    <tr>
-        <td style="font-size: 10pt;"></td>
-        <td style="text-align:left; font-size: 10pt;">Name</td>
-        <td style="text-align:left; font-size: 10pt;">Distance</td>
-        <td style="text-align:left; font-size: 10pt;">Hop</td>
-        <td style="text-align:left; font-size: 10pt;">Symptoms</td>
-    </tr>
-    {% set count = namespace(value=1) %}
-    {% for disease, distance in diseases.items() %}
-    <tr>
-        <td > {{ count.value }}. </td>
-        <td style="text-align:left; "> {{ disease }} </td>
-        <td style="text-align:left; "> {{ distance[0] }} </td>
-        <td style="text-align:left; "> {{ distance[1] }} </td>
-        <td style="text-align:center; "><button class="symptombtn" onclick="get_node_symptoms({name:'{{ disease }}'})">Show</button></td>
-    </tr>
-        {% set count.value = count.value + 1 %}
-    {% endfor %}
-    </table>
+        <!-- result add in javascript-->
+        <table id="disease_table">
+        </table>
     </div>
     
     <!-- End table result block-->
@@ -99,7 +73,8 @@
 		var h = 550;
         var ptop = 70;
         var pright = 250;
-        var symptomlist = JSON.parse('{{ symptoms|tojson }}');
+        var py_symptoms = JSON.parse('{{ symptoms|tojson }}');
+        var py_diseases = JSON.parse('{{ diseases|tojson }}');
  		var dataset = {
 			nodes:  JSON.parse('{{ node|tojson }}'),
 			edges: JSON.parse('{{ edge|tojson }}')
@@ -118,12 +93,15 @@
         //Right click menu 
         var menu = [
                     'Info',
-                    'Add symptom',
                     'Node symptoms',
+                    'Add symptom',
+                    'Remove node'
                     ];
-        var list = [];
+        var symptomlist = [];
         var ullist = document.getElementById('symtomslist');
+        var diseasetable = document.getElementById('disease_table');
         var add = document.getElementById('addsymptom');
+        
         function graph_background(){
             
             circle4 = d3.select("body")
@@ -136,7 +114,7 @@
                         .style("box-shadow", "0 0 20px rgba(15, 153, 217)")
                         .attr("width", w)
 						.attr("height",h);
-
+           
             circle3 = d3.select("body")
 						.append("svg")
                         .style("position", "absolute")
@@ -400,7 +378,7 @@
 
         // ************************* Get node symptoms ********************************** 
         function get_node_symptoms(d){
-            
+            console.log(d.name)
             $.ajax({
                 url: "/node_symptoms",
                 type: "post", //send it through get method
@@ -412,8 +390,7 @@
                     console.log("Error")
                 }
                 else{
-                    console.log("Get symptoms")
-                    remove_graph()
+                    remove_graph();
                     dataset = {
                         nodes: data.nodes,
                         edges: data.edges
@@ -423,12 +400,29 @@
             });
         }
         
-        function remove_graph(){
-            nodes.remove();
-            edges.remove();
-            label.remove();
+        // ************************* Re-Calculate centroid ****************************** 
+        function centroid_calculation(){
+            $.ajax({
+                url: "/re_centroid",
+                type: "post", //send it through get method
+                data:JSON.stringify({'symptoms': symptomlist}),
+                contentType: "application/json; charset=utf-8",
+                success: function (data) {
+                    //$("body").html(response);
+                    py_diseases = data.diseases;
+                    dataset = {
+                        nodes: data.node,
+                        edges: data.edge
+                    };
+                    diseasetable.innerHTML = "";
+                    get_diseaseslist();
+                    remove_graph();
+                    create_graph();
+                    }
+                })
         }
-
+               
+        // ************************* Get main centroid graph ****************************
         function centroid_graph(){
             $.ajax({
                 url: "/centroid_graph"
@@ -449,10 +443,18 @@
             });
         }
         
+        // ************************* Remove graph ***************************************
+        function remove_graph(){
+            nodes.remove();
+            edges.remove();
+            label.remove();
+        }
+        
+        // ************************* Recieve diseases, symptoms from python *************
         function get_symptomslist(){
-            for(symp of symptomlist){
+            for(symp of py_symptoms){
                 var newElement = document.createElement('LI');
-                list.push(symp);
+                symptomlist.push(symp);
                 ullist.appendChild(newElement);
                 newElement.setAttribute('rel', symp);
                 newElement.innerHTML= symp+"<button class='sympclosebtn'>X</button>";
@@ -460,26 +462,59 @@
 
         }
         
-        function centroid_calculation(){
-            $.ajax({
-                url: "/",
-                type: "post", //send it through get method
-                data:JSON.stringify({'symptoms': list}),
-                contentType: "application/json; charset=utf-8",
-                success: function (response) {
-                    $("body").html(response);
+        function get_diseaseslist(){
+            
+            var boxhead = document.createElement('TR');
+            diseasetable.appendChild(boxhead);
+            boxhead.innerHTML = "<th style='padding: 10px;' colspan='5'>"+
+                                "<p style='border:1px; border-style:solid; border-color:rgb(15, 153, 217); padding: 4px; color: #e8ebee;'>"+
+                                "Centroid Calculation"+
+                                "<button class='centroidbtn' onclick='centroid_graph()'>Centroid</button>"+
+                                "</p>"+
+                                "</th>";
+            var columtitle = document.createElement('TR');
+            diseasetable.appendChild(columtitle);
+            columtitle.innerHTML = "<td style='font-size: 10pt;'></td>"+
+                                    "<td style='text-align:left; font-size: 10pt;'>Name</td>"+
+                                    "<td style='text-align:left; font-size: 10pt;'>Distance</td>"+
+                                    "<td style='text-align:left; font-size: 10pt;'>Hop</td>"+
+                                    "<td style='text-align:left; font-size: 10pt;'>Symptoms</td>";
+
+            // for disease list that the result from python.
+            var number = 1;
+            for(disease in py_diseases){
+                var newElement = document.createElement('TR');
+                diseasetable.appendChild(newElement)
+                newElement.innerHTML = "<td>"+number+".</td>";
+                // display disease name.
+                newElement.innerHTML += "<td style='text-align:left; '>"+disease+"</td>";
+                // iterate dict value --> distance, hop  
+                for(i = 0; i < py_diseases[disease].length; i++){
+                    newElement.innerHTML += "<td style='text-align:left; '>"+py_diseases[disease][i]+"</td>";
+                   
                 }
-            })
+                newElement.innerHTML += "<td style='text-align:center; '><button class='symptombtn' onclick='get_node_symptoms({name:\""+disease+"\"})'>Show</button></td>";
+                number++;
+            }
         }
-        get_symptomslist()
+        
+        // ************************* Right click remove node ****************************
+        function click_remove_node(){
+
+        }
+
+        // ************************* initiated graph ************************************ 
+        get_symptomslist();
+        get_diseaseslist();
         graph_background();
         create_graph();
-
+                 
+        // ************************* Symptom Add/Remove list ****************************
         function add_symptom(d){
             var newElement = document.createElement('LI');
             if(d != 0){
-                if(!list.includes(d.name)){
-                    list.push(d.name);
+                if(!symptomlist.includes(d.name)){
+                    symptomlist.push(d.name);
                     ullist.appendChild(newElement);
                     newElement.setAttribute('rel', d.name);
                     newElement.innerHTML= d.name+"<button class='sympclosebtn'>X</button>";
@@ -488,8 +523,8 @@
             }
             else{
                 var item = document.getElementById('symptomitem');
-                if(!list.includes(item.value)){
-                    list.push(item.value);
+                if(!symptomlist.includes(item.value)){
+                    symptomlist.push(item.value);
                     ullist.appendChild(newElement);
                     newElement.setAttribute('rel', item.value);
                     newElement.innerHTML= item.value+"<button class='sympclosebtn'>X</button>";
@@ -500,13 +535,11 @@
             
 
         } 
-
-        // ************************* Symptom Add/Remove list ********************************** 
-       
+            
         //adding a new element to the list
         add.addEventListener('click', function(){
             add_symptom(0)
-         
+        
 
         });
         //remove a element
@@ -514,9 +547,9 @@
         if(e.target && e.target.nodeName == "BUTTON") {
             
             // Remove element in list
-            const removeindex = list.indexOf(e.target.parentNode.getAttribute('rel'));
+            const removeindex = symptomlist.indexOf(e.target.parentNode.getAttribute('rel'));
             if (removeindex > -1) {
-                list.splice(removeindex, 1);
+                symptomlist.splice(removeindex, 1);
             }
 
             // Remove element in ul.
@@ -526,6 +559,7 @@
         });
         
     </script>
+    
     </div>
     <!-- End fish eye block -->
     

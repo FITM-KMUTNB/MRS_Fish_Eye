@@ -24,6 +24,7 @@ def index():
             input_keyword = request.form['symptoms'].split()
             
         symptoms = backend.check_keyword_exist(input_keyword)
+       
         disease, centroid, path, sum_path = backend.disease_hop_activate(symptoms)
         n_disease = dict()
         for k in list(disease.keys())[:10]:
@@ -31,7 +32,7 @@ def index():
     
         centroid = list(n_disease)[0]
         print("Calculate centroid success!")
-        sp_path, allpath = backend.centroid_shotest_path(n_disease, symptoms, centroid)
+        sp_path, allpath, pathcost = backend.centroid_shotest_path(n_disease, symptoms, centroid)
         node, edge = backend.create_graph_sp(n_disease, sp_path, centroid)
         print("Create graph success!")
         return render_template('index.html', symptoms = symptoms, diseases = n_disease, node = node, edge=edge)
@@ -74,7 +75,7 @@ def re_centroid():
     global edge
     global n_disease
     global symptoms
-
+    
     data = request.get_json()
     input_keyword = data['symptoms']
     symptoms = backend.check_keyword_exist(input_keyword)
@@ -85,7 +86,7 @@ def re_centroid():
 
     centroid = list(n_disease)[0]
     print("Calculate centroid success!")
-    sp_path = backend.centroid_shotest_path(n_disease, symptoms, centroid)
+    sp_path, allpath, pathcost = backend.centroid_shotest_path(n_disease, symptoms, centroid)
     node, edge = backend.create_graph_sp(n_disease, sp_path, centroid)
     print("Create graph success!")
     return jsonify({'node':node, 'edge':edge, 'diseases':n_disease})

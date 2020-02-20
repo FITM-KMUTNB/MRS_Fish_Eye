@@ -231,7 +231,7 @@ div.tooltip {
   #slider-box {
     position: absolute;
     right: 50px;
-    margin-top: 300px;
+    top: 500px;
   }
   .edgeslider{
     -webkit-appearance: none;

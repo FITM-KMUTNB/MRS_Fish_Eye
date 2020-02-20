@@ -192,11 +192,11 @@ def node_position(node, centroid):
         'blue':'rgba(2, 69, 255)'
     }
     node_pos = []
-    
+
     for n in node:
         x = None
         y = None
-
+      
         # circle 1 (inside)
         if n['name'] == centroid:
             if n['color'] == 'red':
@@ -308,8 +308,8 @@ def node_position(node, centroid):
       
 def centroid_shotest_path(diseases, symptoms, centroid):
     sp_path = dict()
-    path = nx.single_source_dijkstra_path(G, centroid, weight='cost')
-    
+    lenght, path = nx.single_source_dijkstra(G, centroid, weight='cost')
+  
     for s in symptoms:
         if s in path:
             sp_path[s] = path[s]
@@ -317,7 +317,7 @@ def centroid_shotest_path(diseases, symptoms, centroid):
         if d in path:
             sp_path[d] = path[d]
    
-    return sp_path, path
+    return sp_path, path, lenght
 
 def create_graph_sp(disease, path, centroid):
     node = [] # [{name: node}]
@@ -453,7 +453,47 @@ def node_symptoms_graph(node):
                     
     return graph_node, graph_edge
 
-#keywords=['itch', 'cough','fever']
-#disease_hop_activate(keywords)
-#print(nx.dijkstra_path(G, 'malaria','chickenpox'))
-#get2node_path('malaria', 'chickenpox')
+def all_path_graph(path, pathcost, centroid):
+    node = [] # [{name: node}]
+    edge = [] # [{source: node1, target: node2}]
+    node_index = dict()
+    index_id = 0
+
+    # Graph Nodes
+    for p in path:
+        if p not in node_index:
+            color= None
+                                    
+            # color
+            if G.node[p]['tag'] == 'DS' or G.node[p]['tag'] == 'DT':
+                color = 'red'
+            elif G.node[p]['tag'] == 'ST':
+                color = 'yellow'
+            else:
+                color = 'blue'
+                                        
+            node_index[p] = index_id
+            node.append({'name': p , 'color':color, 'cost':pathcost[p]})
+            index_id += 1
+
+    # Set postition (x, y)
+    node = node_position(node, centroid)
+
+    # Graph Edges
+    check_edge = [] # for check if edge already exist.
+    # iterate path
+    for p in path:
+        for source in range(len(p)):
+            for target in range(source + 1, len(p)):
+                pair = sorted([p[source], p[target]])
+            
+                if pair not in check_edge:
+                    edge.append({'source' : node_index[p[source]], 'target' :  node_index[p[target]]})
+                    check_edge.append(pair)
+ 
+    return node, edge
+
+#sp_path, allpath, pathcost = centroid_shotest_path(['allergy', 'asthma'], ['itch','headache','fever'], 'dengue_fever')
+#all_path_graph(allpath, pathcost, 'dengue_fever')
+#lenght, path = nx.single_source_dijkstra(G, 'dengue_fever', weight='cost', cutoff=30)
+#print(len(lenght))

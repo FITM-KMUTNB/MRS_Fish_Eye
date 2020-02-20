@@ -31,7 +31,7 @@ def index():
     
         centroid = list(n_disease)[0]
         print("Calculate centroid success!")
-        sp_path = backend.centroid_shotest_path(n_disease, symptoms, centroid)
+        sp_path, allpath = backend.centroid_shotest_path(n_disease, symptoms, centroid)
         node, edge = backend.create_graph_sp(n_disease, sp_path, centroid)
         print("Create graph success!")
         return render_template('index.html', symptoms = symptoms, diseases = n_disease, node = node, edge=edge)

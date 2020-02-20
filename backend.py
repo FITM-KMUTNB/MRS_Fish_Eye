@@ -317,7 +317,8 @@ def centroid_shotest_path(diseases, symptoms, centroid):
         if d in path:
             sp_path[d] = path[d]
    
-    return sp_path
+    return sp_path, path
+
 def create_graph_sp(disease, path, centroid):
     node = [] # [{name: node}]
     edge = [] # [{source: node1, target: node2}]

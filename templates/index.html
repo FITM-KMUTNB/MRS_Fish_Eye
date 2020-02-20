@@ -101,7 +101,7 @@
         var ullist = document.getElementById('symtomslist');
         var diseasetable = document.getElementById('disease_table');
         var add = document.getElementById('addsymptom');
-        
+
         function graph_background(){
             
             circle4 = d3.select("body")
@@ -162,6 +162,7 @@
                         .attr("width", w)
 						.attr("height", h);
         }
+        
         function create_graph(){
 
             force = d3.layout.force()
@@ -197,11 +198,23 @@
 				        .enter().append("circle")
                         .attr("r", 6)
                         .style("filter", function (d) {
-                            return "drop-shadow(0px 0px 9px "+d.rgba+")";
+                            // Label input symptoms by color
+                            if(symptomlist.includes(d.name)){
+                                return "drop-shadow(0px 0px 9px rgba(238, 111, 8, 0.952))";
+                            }
+                            else{
+                                return "drop-shadow(0px 0px 9px "+d.rgba+")";
+                            }
                         })
 						.style("fill", "white")
                         .style("stroke", function (d) {
-                            return d.rgba;
+                            // Label input symptoms by color
+                            if(symptomlist.includes(d.name)){
+                                return "rgba(238, 111, 8, 0.952)";
+                            }
+                            else{
+                                return d.rgba;
+                            }
                         })
                         .style("stroke-opacity", .5)
                         .style("stroke-width", 5)
@@ -237,6 +250,9 @@
                                     }
                                     else if(clickmenu == 'Add symptom'){
                                         add_symptom(d);
+                                    }
+                                    else if(clickmenu == 'Remove node'){
+                                        click_remove_node(d);
                                     }
                                     
                                     d3.select('.context-menu').style('display', 'none');
@@ -378,7 +394,7 @@
 
         // ************************* Get node symptoms ********************************** 
         function get_node_symptoms(d){
-            console.log(d.name)
+            console.log("Get nieghbors of :"+d.name);
             $.ajax({
                 url: "/node_symptoms",
                 type: "post", //send it through get method
@@ -499,7 +515,70 @@
         }
         
         // ************************* Right click remove node ****************************
-        function click_remove_node(){
+        function click_remove_node(d){
+            console.log("Remove : "+ d.name);
+
+            // remove node
+            var temp_nodes = []
+            for(index in dataset.nodes){
+                if(dataset.nodes[index].name != d.name){
+                    temp_nodes.push(dataset.nodes[index]);
+                }
+            }
+            // remove link
+            var temp_edges = []
+            var connected_node = []
+            for(index in dataset.edges){
+                if(dataset.edges[index].source.name != d.name && dataset.edges[index].target.name != d.name){
+                    temp_edges.push(dataset.edges[index]);
+                }
+                else{ // keep connected node for check which node have only one connected.
+                    if(dataset.edges[index].source.name == d.name){
+                        connected_node.push(dataset.edges[index].target.name);
+                    }
+                    else{
+                        connected_node.push(dataset.edges[index].source.name);
+                    }
+
+                }
+            }
+
+            // remove connected node
+            for(index in connected_node){
+                var connect_amount = 0;
+                for(e_index in temp_edges){
+                    if(temp_edges[e_index].source.name == connected_node[index] || temp_edges[e_index].target.name == connected_node[index]){
+                        connect_amount++;
+                    }
+                }
+
+                if(connect_amount < 1){
+
+                    // remove connected node in list
+                    for(r_index in temp_nodes){
+                        if(temp_nodes[r_index].name == connected_node[index]){
+                            temp_nodes.splice(r_index, 1);
+                            break;
+                        }
+                    }
+                    // remove connected node link in list
+                    for(r_index in temp_edges){
+                        if(temp_edges[r_index].source.name == connected_node[index] || temp_edges[r_index].target.name == connected_node[index]){
+                            temp_edges.splice(r_index, 1);
+                        }
+                       
+                    }
+                }
+            }
+
+            // re-create graph
+            remove_graph();
+            dataset = {
+                nodes: temp_nodes,
+                edges: temp_edges
+            };
+            create_graph();
+
 
         }
 
@@ -508,9 +587,27 @@
         get_diseaseslist();
         graph_background();
         create_graph();
-                 
-        // ************************* Symptom Add/Remove list ****************************
-        function add_symptom(d){
+               
+    </script>
+    
+    </div>
+    <!-- End fish eye block -->
+    
+
+    <!-- Slider for adjust edge value-->
+    
+    <div id="slider-box">
+        <p style="color:rgb(156, 204, 236);"><b>Cost : <span id="distance_value"></span></b></p>
+        <input type="range" min="1" max="100" value="50" class="edgeslider" id="sliderbar">
+    </div>
+    
+    <!-- End Slider -->
+
+</div>
+<!-- End Main box -->
+<script>
+    // ************************* Symptom Add/Remove list ****************************
+    function add_symptom(d){
             var newElement = document.createElement('LI');
             if(d != 0){
                 if(!symptomlist.includes(d.name)){
@@ -557,27 +654,19 @@
            
             }
         });
-        
-    </script>
-    
-    </div>
-    <!-- End fish eye block -->
-    
-
-    <!-- Slider for adjust edge value-->
-    <!--
-    <div id="slider-box">
-        <input type="range" class="edgeslider" style="transform: rotate(270deg); -moz-transform: rotate(270deg); margin-right: 20px;">
-    </div>
-    -->
-    <!-- End Slider -->
-
-</div>
-<!-- End Main box -->
-
+             
+    // ******************* Slider bar for adjust node by edge distance *************
+    var slider = document.getElementById("sliderbar");
+    var output = document.getElementById("distance_value");
+    output.innerHTML = slider.value;
+    slider.oninput = function() {
+        output.innerHTML = this.value;
+    }
+</script>
     
 {% endif %}
 </body>
+
 
 </html>
 

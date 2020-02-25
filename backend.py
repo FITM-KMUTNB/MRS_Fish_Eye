@@ -197,7 +197,7 @@ def node_position(node, centroid):
         x = None
         y = None
       
-        # circle 1 (inside)
+        # circle 1 (inside) centroid fixed
         if n['name'] == centroid:
             if n['color'] == 'red':
                 n['rgba'] = color['red']
@@ -453,6 +453,7 @@ def node_symptoms_graph(node):
                     
     return graph_node, graph_edge
 
+# not use
 def all_path_graph(path, pathcost, centroid):
     node = [] # [{name: node}]
     edge = [] # [{source: node1, target: node2}]
@@ -492,6 +493,210 @@ def all_path_graph(path, pathcost, centroid):
                     check_edge.append(pair)
  
     return node, edge
+
+def nodes_in_distance(centroid, org_nodes, org_edges, cost):
+    lenght, path = nx.single_source_dijkstra(G, centroid, weight='cost', cutoff=cost)
+    neigbors_amount = len(lenght)
+    print("distance :", cost, " neighbors : ", neigbors_amount)
+
+    node = [] # [ {name: node, 'color': 'blue', 'rgba': 'rgba(2, 69, 255)', 'x': 423, 'y': 437, 'fixed': True} ]
+    edge = [] # [ {source: node1, target: node2} ]
+    node_index = dict()
+    index_id = 0
+
+    # Graph Nodes
+    for p in path:
+        if p not in node_index:
+            color= None
+                                    
+            # color
+            if G.node[p]['tag'] == 'DS' or G.node[p]['tag'] == 'DT':
+                color = 'red'
+            elif G.node[p]['tag'] == 'ST':
+                color = 'yellow'
+            else:
+                color = 'blue'
+                                        
+            node_index[p] = index_id
+            node.append({'name': p , 'color':color})
+            index_id += 1
+            
+    # Set postition (x, y)
+    node = node_position_intersect(node, centroid)
+
+    # add initial nodes
+    for orn in org_nodes:
+        # if node from neighbors calculation duplicate with orignal node, set original pos(x, y) to that node.
+        if orn['name'] in node_index:
+            i = node_index[orn['name']]
+            node[i]['x'] = orn['x']
+            node[i]['y'] = orn['y']
+
+        # add original node with original position
+        else:
+            node_index[orn['name']] = index_id
+            node.append(orn)
+            index_id += 1
+    # Graph Edges
+    check_edge = [] # for check if edge already exist.
+    # iterate path
+    for p in path:
+        for source in range(len(path[p])):
+            for target in range(source + 1, len(path[p])):
+                pair = sorted([path[p][source], path[p][target]])
+                if pair not in check_edge:
+                    edge.append({'source' : node_index[path[p][source]], 'target' :  node_index[path[p][target]]})
+                    check_edge.append(pair)
+
+    # add original edges if not aready added
+    for ore in org_edges:
+        pair = sorted([org_nodes[ore['source']]['name'], org_nodes[ore['target']]['name']])
+        if pair not in check_edge:
+            # node_index['name'] = id
+            # org_nodes['name'] = 'dengue_fever'
+            # ore['source'] = node index
+            # --> node_index[org_nodes[id]['name']]
+
+            source_id = node_index[org_nodes[ore['source']]['name']]
+            target_id = node_index[org_nodes[ore['target']]['name']]
+            edge.append({'source' : source_id, 'target' :  target_id})
+            check_edge.append(pair)
+    print("done")
+    return node, edge
+
+# set nodes position without check nodes overlap
+def node_position_intersect(node, centroid):
+    xc = 275
+    yc = 275
+    node_size = 10
+    circle_coordinates = {
+        'circle1':{'x1':225,'x2':325,'y1':225,'y2':325,'r':50},
+        'circle2':{'x1':125,'x2':425,'y1':125,'y2':425,'r':150},
+        'circle3':{'x1':75,'x2':475,'y1':75,'y2':475,'r':200},
+        'circle4':{'x1':0,'x2':550,'y1':0,'y2':550,'r':275},
+    }
+    color = {
+        'red':'rgba(247, 32, 32, 1)',
+        'yellow':'rgba(172, 247, 32)',
+        'blue':'rgba(2, 69, 255)'
+    }
+    node_pos = []
+
+    for n in node:
+        x = None
+        y = None
+      
+        # circle 1 (inside) centroid fixed
+        if n['name'] == centroid:
+            if n['color'] == 'red':
+                n['rgba'] = color['red']
+            elif n['color'] == 'yellow':
+                n['rgba'] = color['yellow']
+            else:
+                n['rgba'] = color['blue']
+
+            x = xc
+            y = yc
+
+        # circle 2
+        elif n['color'] == 'red':
+            n['rgba'] = color['red']
+            x1 = circle_coordinates['circle2']['x1']
+            x2 = circle_coordinates['circle2']['x2']
+            y1 = circle_coordinates['circle2']['y1']
+            y2 = circle_coordinates['circle2']['y2']
+
+            while True:
+                while True:
+                    x = random.randint(x1,x2) 
+                    y = random.randint(y1,y2)
+                    d = math.sqrt((x - xc)**2  + (y - yc)**2)
+
+                    # if point outside circle1
+                    if d-node_size > circle_coordinates['circle1']['r']:
+                        break
+              
+                d = math.sqrt((x - xc)**2  + (y - yc)**2)
+                # if point inside circle2
+                if d + node_size < circle_coordinates['circle2']['r']:
+                    # check node intersect
+                    intersect = False
+                    for c2 in node_pos:
+                        c1c2 = math.sqrt((x - c2['x'])**2 + (y- c2['y'])**2)
+                        if c1c2 < 20*2: # 20 = r1+r2
+                            intersect = True
+                    #if not intersect:
+                    if True:
+                        node_pos.append({'x':x, 'y':y})
+                        break
+        # circle 3
+        elif n['color'] == 'yellow':
+            n['rgba'] = color['yellow']
+            x1 = circle_coordinates['circle3']['x1']
+            x2 = circle_coordinates['circle3']['x2']
+            y1 = circle_coordinates['circle3']['y1']
+            y2 = circle_coordinates['circle3']['y2']
+
+            while True:
+                while True:
+                    x = random.randint(x1,x2) 
+                    y = random.randint(y1,y2)
+                    d = math.sqrt((x - xc)**2  + (y - yc)**2)
+
+                    # if point outside circle1
+                    if d-node_size > circle_coordinates['circle2']['r']:
+                        break
+              
+                d = math.sqrt((x - xc)**2  + (y - yc)**2)
+                # if point inside circle2
+                if d + node_size < circle_coordinates['circle3']['r']:
+                     # check node intersect
+                    intersect = False
+                    for c2 in node_pos:
+                        c1c2 = math.sqrt((x - c2['x'])**2 + (y- c2['y'])**2)
+                        if c1c2 < 20*2: # 20 = r1+r2
+                            intersect = True
+                    #if not intersect:
+                    if True:
+                        node_pos.append({'x':x, 'y':y})
+                        break
+
+         # circle 4 (outside)
+        elif n['color'] == 'blue':
+            n['rgba'] = color['blue']
+            x1 = circle_coordinates['circle4']['x1']
+            x2 = circle_coordinates['circle4']['x2']
+            y1 = circle_coordinates['circle4']['y1']
+            y2 = circle_coordinates['circle4']['y2']
+
+            while True:
+                while True:
+                    x = random.randint(x1,x2) 
+                    y = random.randint(y1,y2)
+                    d = math.sqrt((x - xc)**2  + (y - yc)**2)
+
+                    # if point outside circle1
+                    if d-node_size > circle_coordinates['circle3']['r']:
+                        break
+              
+                d = math.sqrt((x - xc)**2  + (y - yc)**2)
+                # if point inside circle2
+                if d + node_size*2 < circle_coordinates['circle4']['r']:
+                     # check node intersect
+                    intersect = False
+                    for c2 in node_pos:
+                        c1c2 = math.sqrt((x - c2['x'])**2 + (y- c2['y'])**2)
+                        if c1c2 < 20*2: # 20 = r1+r2
+                            intersect = True
+                    #if not intersect:
+                    if True:
+                        node_pos.append({'x':x, 'y':y})
+                        break
+        n['x'] = x
+        n['y'] = y
+        n['fixed'] = True
+
+    return node
 
 #sp_path, allpath, pathcost = centroid_shotest_path(['allergy', 'asthma'], ['itch','headache','fever'], 'dengue_fever')
 #all_path_graph(allpath, pathcost, 'dengue_fever')

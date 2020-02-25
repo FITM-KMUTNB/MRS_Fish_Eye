@@ -253,12 +253,11 @@ div.tooltip {
     opacity: 1;
   }
   .edgeslider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 25px;
-    height: 25px;
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
-    background: #4CAF50;
+    border-width: 4px;
+    background: rgb(255, 60, 0);
     cursor: pointer;
   }
   

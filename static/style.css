@@ -346,9 +346,9 @@ div.tooltip {
 .minusbtn {
     position: absolute;
     right: 260px;
-    top: 525px;
-    height: 25px;
-    width: 25px;
+    top: 528px;
+    height: 20px;
+    width: 20px;
     background-color: #bbb;
     border-radius: 50%;
     display: inline-block;
@@ -367,10 +367,10 @@ div.tooltip {
 
 .plusbtn {
     position: absolute;
-    right: 10px;
-    top: 525px;
-    height: 25px;
-    width: 25px;
+    right: 20px;
+    top: 528px;
+    height: 20px;
+    width: 20px;
     background-color: #bbb;
     border-radius: 50%;
     display: inline-block;

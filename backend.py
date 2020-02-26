@@ -381,7 +381,22 @@ def create_graph_sp(disease, path, centroid):
             for target in range(source + 1, len(p)):
                 pair = sorted([p[source], p[target]])
                 if pair not in check_edge:
-                    edge.append({'source' : node_index[p[source]], 'target' :  node_index[p[target]]})
+                    line_color = None
+                    # line from red node to yellow node.
+                    if node[node_index[p[source]]]['color'] == 'red' and node[node_index[p[target]]]['color'] == 'yellow' \
+                        or node[node_index[p[source]]]['color'] == 'yellow' and node[node_index[p[target]]]['color'] == 'red':
+                        line_color = 'red'
+                    # line from red node to blue node.
+                    elif node[node_index[p[source]]]['color'] == 'red' and node[node_index[p[target]]]['color'] == 'blue' \
+                        or node[node_index[p[source]]]['color'] == 'blue' and node[node_index[p[target]]]['color'] == 'red':
+                        line_color = 'deepSkyBlue'
+                    # line from yellow node to blue node.
+                    elif node[node_index[p[source]]]['color'] == 'yellow' and node[node_index[p[target]]]['color'] == 'blue' \
+                        or node[node_index[p[source]]]['color'] == 'blue' and node[node_index[p[target]]]['color'] == 'yellow':
+                        line_color = 'yellow'
+                    else:
+                        line_color = 'white'
+                    edge.append({'source' : node_index[p[source]], 'target' :  node_index[p[target]], 'color':line_color})
                     check_edge.append(pair)
     
     return node, edge
@@ -395,7 +410,6 @@ def document_content(node):
         return text_file
     except:
         return None
-
 
 def node_symptoms_graph(node):
 
@@ -448,7 +462,22 @@ def node_symptoms_graph(node):
             for target in range(source + 1, len(p)):
                 pair = sorted([p[source], p[target]])
                 if pair not in check_edge:
-                    graph_edge.append({'source' : node_index[p[source]], 'target' :  node_index[p[target]]})
+                    line_color = None
+                    # line from red node to yellow node.
+                    if graph_node[node_index[p[source]]]['color'] == 'red' and graph_node[node_index[p[target]]]['color'] == 'yellow' \
+                        or graph_node[node_index[p[source]]]['color'] == 'yellow' and graph_node[node_index[p[target]]]['color'] == 'red':
+                        line_color = 'red'
+                    # line from red node to blue node.
+                    elif graph_node[node_index[p[source]]]['color'] == 'red' and graph_node[node_index[p[target]]]['color'] == 'blue' \
+                        or graph_node[node_index[p[source]]]['color'] == 'blue' and graph_node[node_index[p[target]]]['color'] == 'red':
+                        line_color = 'deepSkyBlue'
+                    # line from yellow node to blue node.
+                    elif graph_node[node_index[p[source]]]['color'] == 'yellow' and graph_node[node_index[p[target]]]['color'] == 'blue' \
+                        or graph_node[node_index[p[source]]]['color'] == 'blue' and graph_node[node_index[p[target]]]['color'] == 'yellow':
+                        line_color = 'yellow'
+                    else:
+                        line_color = 'white'
+                    graph_edge.append({'source' : node_index[p[source]], 'target' :  node_index[p[target]], 'color':line_color})
                     check_edge.append(pair)
                     
     return graph_node, graph_edge
@@ -545,7 +574,22 @@ def nodes_in_distance(centroid, org_nodes, org_edges, cost):
             for target in range(source + 1, len(path[p])):
                 pair = sorted([path[p][source], path[p][target]])
                 if pair not in check_edge:
-                    edge.append({'source' : node_index[path[p][source]], 'target' :  node_index[path[p][target]]})
+                    line_color = None
+                    # line from red node to yellow node.
+                    if node[node_index[path[p][source]]]['color'] == 'red' and node[node_index[path[p][target]]]['color'] == 'yellow' \
+                        or node[node_index[path[p][source]]]['color'] == 'yellow' and node[node_index[path[p][target]]]['color'] == 'red':
+                        line_color = 'red'
+                    # line from red node to blue node.
+                    elif node[node_index[path[p][source]]]['color'] == 'red' and node[node_index[path[p][target]]]['color'] == 'blue' \
+                        or node[node_index[path[p][source]]]['color'] == 'blue' and node[node_index[path[p][target]]]['color'] == 'red':
+                        line_color = 'deepSkyBlue'
+                    # line from yellow node to blue node.
+                    elif node[node_index[path[p][source]]]['color'] == 'yellow' and node[node_index[path[p][target]]]['color'] == 'blue' \
+                        or node[node_index[path[p][source]]]['color'] == 'blue' and node[node_index[path[p][target]]]['color'] == 'yellow':
+                        line_color = 'yellow'
+                    else:
+                        line_color = 'white'
+                    edge.append({'source' : node_index[path[p][source]], 'target' :  node_index[path[p][target]], 'color':line_color})
                     check_edge.append(pair)
 
     # add original edges if not aready added
@@ -556,10 +600,25 @@ def nodes_in_distance(centroid, org_nodes, org_edges, cost):
             # org_nodes['name'] = 'dengue_fever'
             # ore['source'] = node index
             # --> node_index[org_nodes[id]['name']]
-
             source_id = node_index[org_nodes[ore['source']]['name']]
             target_id = node_index[org_nodes[ore['target']]['name']]
-            edge.append({'source' : source_id, 'target' :  target_id})
+            line_color = None
+            # line from red node to yellow node.
+            if node[source_id]['color'] == 'red' and node[target_id]['color'] == 'yellow' \
+                or node[source_id]['color'] == 'yellow' and node[target_id]['color'] == 'red':
+                line_color = 'red'
+            # line from red node to blue node.
+            elif node[source_id]['color'] == 'red' and node[target_id]['color'] == 'blue' \
+                or node[source_id]['color'] == 'blue' and node[target_id]['color'] == 'red':
+                line_color = 'deepSkyBlue'
+            # line from yellow node to blue node.
+            elif node[source_id]['color'] == 'yellow' and node[target_id]['color'] == 'blue' \
+                or node[source_id]['color'] == 'blue' and node[target_id]['color'] == 'yellow':
+                line_color = 'yellow'
+            else:
+                line_color = 'white'
+                       
+            edge.append({'source' : source_id, 'target' :  target_id, 'color': line_color})
             check_edge.append(pair)
     print("done")
     return node, edge
@@ -698,6 +757,44 @@ def node_position_intersect(node, centroid):
 
     return node
 
+# display direct connected nodes
+def get_direct_connected_nodes(selectednode, nodes, edges):
+    direct_nodes = []
+    direct_edges = []
+    node_index = dict()
+    node_id = 0
+
+    for e in edges:
+        if nodes[e['source']]['name'] == selectednode or nodes[e['target']]['name'] == selectednode:
+            direct_nodes.append(nodes[e['source']])
+            node_index[nodes[e['source']]['name']] = node_id
+            node_id += 1
+            direct_nodes.append(nodes[e['target']])
+            node_index[nodes[e['target']]['name']] = node_id
+            node_id += 1
+
+            line_color = None
+            # line from red node to yellow node.
+            if nodes[e['source']]['color']  == 'red' and nodes[e['target']]['color']  == 'yellow' \
+                or nodes[e['source']]['color']  == 'yellow' and nodes[e['target']]['color'] == 'red':
+                line_color = 'red'
+            # line from red node to blue node.
+            elif nodes[e['source']]['color']  == 'red' and nodes[e['target']]['color'] == 'blue' \
+                or nodes[e['source']]['color']  == 'blue' and nodes[e['target']]['color'] == 'red':
+                line_color = 'deepSkyBlue'
+            # line from yellow node to blue node.
+            elif nodes[e['source']]['color']  == 'yellow' and nodes[e['target']]['color'] == 'blue' \
+                or nodes[e['source']]['color']  == 'blue' and nodes[e['target']]['color'] == 'yellow':
+                line_color = 'yellow'
+            else:
+                line_color = 'white'
+
+
+            direct_edges.append({'source' :  node_index[nodes[e['source']]['name']], 'target' :  node_index[nodes[e['target']]['name']], 'color': line_color})
+
+    return direct_nodes, direct_edges
+
+    
 #sp_path, allpath, pathcost = centroid_shotest_path(['allergy', 'asthma'], ['itch','headache','fever'], 'dengue_fever')
 #all_path_graph(allpath, pathcost, 'dengue_fever')
 #lenght, path = nx.single_source_dijkstra(G, 'dengue_fever', weight='cost', cutoff=30)

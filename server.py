@@ -125,7 +125,13 @@ def nodes_radius():
 
     return jsonify({'nodes':gnodes_radius, 'edges':gedges_radius})
 
-
+# display direct connected nodes in graph
+@app.route('/direct_connected_nodes', methods=['GET','POST'])
+def direct_connected_nodes():
+    selectednode = request.form['selectednode']
+    direct_nodes, direct_link = backend.get_direct_connected_nodes(selectednode, nodes_radius, edges_radius)
+    
+    return jsonify({'nodes':direct_nodes, 'edges':direct_link})
 
 if __name__ == "__main__":
     app.run(debug=True)

@@ -93,9 +93,10 @@
         //Right click menu 
         var menu = [
                     'Info',
-                    'Neighbors',
-                    'Add symptom',
-                    'Remove node'
+                    'Move to center',
+                    'Add keyword',
+                    'Remove node',
+                    'Direct connected'
                     ];
         var symptomlist = [];
         var ullist = document.getElementById('symtomslist');
@@ -114,7 +115,7 @@
                         .style("box-shadow", "0 0 20px rgba(15, 153, 217)")
                         .attr("width", w)
 						.attr("height",h);
-           
+                        
             circle3 = d3.select("body")
 						.append("svg")
                         .style("position", "absolute")
@@ -127,7 +128,7 @@
                         .style("border-width", "3px")
                         .attr("width", "400")
 						.attr("height", "400");
-
+            
             circle2 = d3.select("body")
 						.append("svg")
                         .style("position", "absolute")
@@ -179,21 +180,33 @@
                     .on("dragend", dragend);
 
             zoomContainer = svg.call(d3.behavior.zoom().on("zoom", function () {
-                                zoomContainer.attr("transform",
+                                //console.log("translate : "+d3.event.translate);
+                                //console.log("scal : "+d3.event.scale);
+                                circle3.style("background", "rgba(83, 118, 233, 0)")
+                                        .style("border-width", "0px");
+                                circle2.style("background", "rgba(83, 118, 233, 0)")
+                                        .style("border-width", "0px");
+                                circle1.style("background", "rgba(83, 118, 233, 0)")
+                                        .style("border-width", "0px");
+                                zoomContainer.attr("transform",                           
                                                 "translate(" + d3.event.translate + ")"
-                                                + " scale(" + d3.event.scale + ")");
+                                                + " scale(" + d3.event.scale + ")"
+                                );
                             }))
                             .append("g");
                             
-		    edges = svg.selectAll("line")
+		    edges = zoomContainer.selectAll("line")
 						.data(dataset.edges)
 						.enter().append("line")
-						.style("stroke", "white")
+						//.style("stroke", "white")
+                        .style("stroke", function(d){
+                            return d.color;
+                        })
                         .style("stroke-opacity", .2)
-                        .style("stroke-width", 1)
+                        .style("stroke-width", 2)
                         //.style("filter", "drop-shadow(0px 0px 2px rgb(15, 153, 217))")
 
-            nodes = svg.selectAll("circle")
+            nodes = zoomContainer.selectAll("circle")
 						.data(dataset.nodes)
 				        .enter().append("circle")
                         .attr("r", 6)
@@ -245,14 +258,17 @@
                                     if(clickmenu == 'Info'){
                                         Document_box(d);
                                     }
-                                    else if(clickmenu == 'Neighbors'){
+                                    else if(clickmenu == 'Move to center'){
                                         get_node_symptoms(d);
                                     }
-                                    else if(clickmenu == 'Add symptom'){
+                                    else if(clickmenu == 'Add keyword'){
                                         add_symptom(d);
                                     }
                                     else if(clickmenu == 'Remove node'){
                                         click_remove_node(d);
+                                    }
+                                    else if(clickmenu == 'Direct connected'){
+                                        direct_connected_nodes(d);
                                     }
                                     
                                     d3.select('.context-menu').style('display', 'none');
@@ -268,7 +284,7 @@
                         })                    
                         .call(node_drag);
             
-		    label = svg.selectAll("text")
+		    label = zoomContainer.selectAll("text")
 						.data(dataset.nodes)
 						.enter()
 						.append("text")
@@ -304,7 +320,7 @@
         //Node and edge position
         function tick(){
             d3.selectAll('circle').attr("transform", function(d) { 
-                //console.log("translate("+d.name + d.x + "," + d.y + ")");
+                //console.log(d.name+", translate("+d.x + "," + d.y + ")");
                 return "translate(" + (d.x) + "," + (d.y) + ")"; });
             d3.selectAll('line')
                 .attr("x1", function(d) { return d.source.x; })
@@ -457,6 +473,12 @@
                         edges: data.edges
                     };
                     create_graph();
+                    circle3.style("background", "rgba(83, 118, 233, 0.1)")
+                            .style("border-width", "3px");
+                    circle2.style("background", "rgba(83, 118, 233, 0.2)")
+                            .style("border-width", "3px");
+                    circle1.style("background", "rgb(161, 157, 157,.2)")
+                            .style("border-width", "5px");
                     reset_cost_nodes_output();
                 }
             });
@@ -495,7 +517,7 @@
             diseasetable.appendChild(columtitle);
             columtitle.innerHTML = "<td style='font-size: 10pt;'></td>"+
                                     "<td style='text-align:left; font-size: 10pt;'>Name</td>"+
-                                    "<td style='text-align:left; font-size: 10pt;'>Distance</td>"+
+                                    "<td style='text-align:left; font-size: 10pt;'>Average&nbsp;Distance</td>"+
                                     "<td style='text-align:left; font-size: 10pt;'>Hop</td>"+
                                     "<td style='text-align:left; font-size: 10pt;'>Symptoms</td>";
 
@@ -509,7 +531,7 @@
                 newElement.innerHTML += "<td style='text-align:left; '>"+disease+"</td>";
                 // iterate dict value --> distance, hop  
                 for(i = 0; i < py_diseases[disease].length; i++){
-                    newElement.innerHTML += "<td style='text-align:left; '>"+py_diseases[disease][i]+"</td>";
+                    newElement.innerHTML += "<td style='text-align:center; '>"+py_diseases[disease][i]+"</td>";
                    
                 }
                 newElement.innerHTML += "<td style='text-align:center; '><button class='symptombtn' onclick='get_node_symptoms({name:\""+disease+"\"})'>Show</button></td>";
@@ -584,7 +606,32 @@
 
 
         }
-
+        
+        
+        // ************************* Display selected node direct connected *************
+        function direct_connected_nodes(d){
+            console.log("Get direct connected of :"+d.name);
+            $.ajax({
+                url: "/direct_connected_nodes",
+                type: "post", //send it through get method
+                data:{'selectednode': d.name},
+               
+            })
+            .done(function(data){
+                if(data.error){
+                    console.log("Error")
+                }
+                else{
+                    remove_graph();
+                    dataset = {
+                        nodes: data.nodes,
+                        edges: data.edges
+                    };
+                    create_graph();
+                    reset_cost_nodes_output();
+                }
+            });
+        }
         // ************************* initiated graph ************************************ 
         get_symptomslist();
         get_diseaseslist();
@@ -684,20 +731,18 @@
         cost_output.innerHTML = this.value;
         display_loader.innerHTML = "<div class='loader'></div> ";
         nodes_in_radius(this.value);
-        display_loader.innerHTML = "";
+       
     }
 
 
     $(function(){  
         $('span.minusbtn').click(function(e){
             e.preventDefault(); 
-            if(slider.value > 1){
-                slider.value = parseInt(slider.value)-1;
-                cost_output.innerHTML = slider.value;
-                display_loader.innerHTML = "<div class='loader'></div> ";
-                nodes_in_radius(slider.value);
-                display_loader.innerHTML = "";
-            }
+           
+            slider.value = parseInt(slider.value)-1;
+            cost_output.innerHTML = slider.value;
+            display_loader.innerHTML = "<div class='loader'></div> ";
+            nodes_in_radius(slider.value);
         });
         $('span.plusbtn').click(function(e){
             e.preventDefault(); 
@@ -706,7 +751,7 @@
                 cost_output.innerHTML =  slider.value ;
                 display_loader.innerHTML = "<div class='loader'></div> ";
                 nodes_in_radius(slider.value);
-                display_loader.innerHTML = "";
+                
             }
         });
     });
@@ -736,6 +781,7 @@
                         edges: data.edges
                     };
                     create_graph();
+                    display_loader.innerHTML = "";
                 }
         });
 

@@ -319,7 +319,7 @@ def centroid_shotest_path(diseases, symptoms, centroid):
    
     return sp_path, path, lenght
 
-def create_graph_sp(disease, path, centroid):
+def create_graph_sp(disease, path, centroid, pathcost):
     node = [] # [{name: node}]
     edge = [] # [{source: node1, target: node2}]
     node_index = dict()
@@ -345,7 +345,7 @@ def create_graph_sp(disease, path, centroid):
                     color = 'blue'
                                             
                 node_index[p] = index_id
-                node.append({'name': p , 'color':color})
+                node.append({'name': p , 'color':color, 'cost':pathcost[p]})
                 index_id += 1
 
     d_list = list(disease)
@@ -367,7 +367,7 @@ def create_graph_sp(disease, path, centroid):
                         color = 'blue'
                         
                     node_index[n] = index_id
-                    node.append({'name': n , 'color':color})
+                    node.append({'name': n , 'color':color , 'cost':pathcost[p]})
                     index_id += 1
 
     # Set postition (x, y)
@@ -413,7 +413,7 @@ def document_content(node):
 
 def node_symptoms_graph(node):
 
-    path = nx.single_source_dijkstra_path(G, node, weight='cost')
+    lenght, path = nx.single_source_dijkstra(G, node, weight='cost')
     closest_symptoms = dict()
     limit = 10
 
@@ -444,7 +444,7 @@ def node_symptoms_graph(node):
                 else :
                     color = 'blue'
                 node_index[cvalue] = index_id
-                graph_node.append({'name': cvalue , 'color':color})
+                graph_node.append({'name': cvalue , 'color':color, 'cost':lenght[p]})
                 index_id += 1
 
     #   set node postition (x, y)
@@ -523,108 +523,423 @@ def all_path_graph(path, pathcost, centroid):
  
     return node, edge
 
-def nodes_in_distance(centroid, org_nodes, org_edges, cost):
-    lenght, path = nx.single_source_dijkstra(G, centroid, weight='cost', cutoff=cost)
-    neigbors_amount = len(lenght)
-    print("distance :", cost, " neighbors : ", neigbors_amount)
-
+# display more nodes in range of distance from slider bar/ plus distance
+def nodes_in_distance(centroid,main_nodes, org_nodes, org_edges, cost):
     node = [] # [ {name: node, 'color': 'blue', 'rgba': 'rgba(2, 69, 255)', 'x': 423, 'y': 437, 'fixed': True} ]
     edge = [] # [ {source: node1, target: node2} ]
     node_index = dict()
     index_id = 0
 
-    # Graph Nodes
-    for p in path:
-        if p not in node_index:
-            color= None
-                                    
-            # color
-            if G.node[p]['tag'] == 'DS' or G.node[p]['tag'] == 'DT':
-                color = 'red'
-            elif G.node[p]['tag'] == 'ST':
-                color = 'yellow'
-            else:
-                color = 'blue'
-                                        
-            node_index[p] = index_id
-            node.append({'name': p , 'color':color})
-            index_id += 1
-            
-    # Set postition (x, y)
-    node = node_position_intersect(node, centroid)
+    #keep main nodes name in list
+    except_nodes = []
+    for mn in main_nodes:
+        except_nodes.append(mn['name'])
 
-    # add initial nodes
+    #check if there are have been adjust cost that higher than current cost.
+    have_higher_cost = False 
     for orn in org_nodes:
-        # if node from neighbors calculation duplicate with orignal node, set original pos(x, y) to that node.
-        if orn['name'] in node_index:
-            i = node_index[orn['name']]
-            node[i]['x'] = orn['x']
-            node[i]['y'] = orn['y']
+        if orn['name'] not in except_nodes:
+            if orn['cost'] > cost:
+                have_higher_cost = True
+                break
+    if have_higher_cost:
+        # Graph Nodes
+        for orn in org_nodes:
+            distance = orn['cost']
+            if distance < cost+1 or orn['name'] in except_nodes:
+                node.append(orn)
+                node_index[orn['name']] = index_id
+                index_id += 1
+        
+        # Graph Edges
+        for e in org_edges:
+            source_name = org_nodes[e['source']]['name']
+            target_name = org_nodes[e['target']]['name']
+            if source_name in node_index and target_name in node_index:
+                source_id = node_index[source_name]
+                target_id = node_index[target_name]
+                line_color = None
 
-        # add original node with original position
-        else:
-            node_index[orn['name']] = index_id
-            node.append(orn)
-            index_id += 1
-    # Graph Edges
-    check_edge = [] # for check if edge already exist.
-    # iterate path
-    for p in path:
-        for source in range(len(path[p])):
-            for target in range(source + 1, len(path[p])):
-                pair = sorted([path[p][source], path[p][target]])
-                if pair not in check_edge:
-                    line_color = None
-                    # line from red node to yellow node.
-                    if node[node_index[path[p][source]]]['color'] == 'red' and node[node_index[path[p][target]]]['color'] == 'yellow' \
-                        or node[node_index[path[p][source]]]['color'] == 'yellow' and node[node_index[path[p][target]]]['color'] == 'red':
-                        line_color = 'red'
-                    # line from red node to blue node.
-                    elif node[node_index[path[p][source]]]['color'] == 'red' and node[node_index[path[p][target]]]['color'] == 'blue' \
-                        or node[node_index[path[p][source]]]['color'] == 'blue' and node[node_index[path[p][target]]]['color'] == 'red':
-                        line_color = 'deepSkyBlue'
-                    # line from yellow node to blue node.
-                    elif node[node_index[path[p][source]]]['color'] == 'yellow' and node[node_index[path[p][target]]]['color'] == 'blue' \
-                        or node[node_index[path[p][source]]]['color'] == 'blue' and node[node_index[path[p][target]]]['color'] == 'yellow':
-                        line_color = 'yellow'
-                    else:
-                        line_color = 'white'
-                    edge.append({'source' : node_index[path[p][source]], 'target' :  node_index[path[p][target]], 'color':line_color})
-                    check_edge.append(pair)
+                # line from red node to yellow node.
+                if node[source_id]['color']  == 'red' and node[target_id]['color']  == 'yellow' \
+                    or node[source_id]['color']  == 'yellow' and node[target_id]['color'] == 'red':
+                    line_color = 'red'
+                # line from red node to blue node.
+                elif node[source_id]['color']  == 'red' and node[target_id]['color'] == 'blue' \
+                    or node[source_id]['color']  == 'blue' and node[target_id]['color'] == 'red':
+                    line_color = 'deepSkyBlue'
+                # line from yellow node to blue node.
+                elif node[source_id]['color']  == 'yellow' and node[target_id]['color'] == 'blue' \
+                    or node[source_id]['color']  == 'blue' and node[target_id]['color'] == 'yellow':
+                    line_color = 'yellow'
+                else:
+                    line_color = 'white'
 
-    # add original edges if not aready added
-    for ore in org_edges:
-        pair = sorted([org_nodes[ore['source']]['name'], org_nodes[ore['target']]['name']])
-        if pair not in check_edge:
-            # node_index['name'] = id
-            # org_nodes['name'] = 'dengue_fever'
-            # ore['source'] = node index
-            # --> node_index[org_nodes[id]['name']]
-            source_id = node_index[org_nodes[ore['source']]['name']]
-            target_id = node_index[org_nodes[ore['target']]['name']]
+                edge.append({'source' :  node_index[source_name], 'target' :  node_index[target_name], 'color': line_color})
+    
+    #first calculate in this cost
+    else:
+        lenght, path = nx.single_source_dijkstra(G, centroid, weight='cost', cutoff=cost)
+        neigbors_amount = len(lenght)
+        print("distance :", cost, " neighbors : ", neigbors_amount)
+
+        # pos of nodes in main graph, after increase slider distance these nodes still on old position
+        except_pos = []
+        for orn in org_nodes:
+            x = orn['x']
+            y = orn['y']
+            except_pos.append({'x':x, 'y':y})
+
+        # Graph Nodes
+        for p in path:
+            if p not in node_index:
+                color= None
+                                        
+                # color
+                if G.node[p]['tag'] == 'DS' or G.node[p]['tag'] == 'DT':
+                    color = 'red'
+                elif G.node[p]['tag'] == 'ST':
+                    color = 'yellow'
+                else:
+                    color = 'blue'
+                                            
+                node_index[p] = index_id
+                node.append({'name': p , 'color':color, 'cost':lenght[p]})
+                index_id += 1
+                
+        # Set postition (x, y)
+        node = node_position_intersect(node, centroid, except_pos)
+
+        # add initial nodes
+        for orn in org_nodes:
+            # if node from neighbors calculation duplicate with orignal node, set original pos(x, y) to that node.
+            if orn['name'] in node_index:
+                i = node_index[orn['name']]
+                node[i]['x'] = orn['x']
+                node[i]['y'] = orn['y']
+
+            # add original node with original position
+            else:
+                node_index[orn['name']] = index_id
+                node.append(orn)
+                index_id += 1
+        # Graph Edges
+        check_edge = [] # for check if edge already exist.
+        # iterate path
+        for p in path:
+            for source in range(len(path[p])):
+                for target in range(source + 1, len(path[p])):
+                    pair = sorted([path[p][source], path[p][target]])
+                    if pair not in check_edge:
+                        line_color = None
+                        # line from red node to yellow node.
+                        if node[node_index[path[p][source]]]['color'] == 'red' and node[node_index[path[p][target]]]['color'] == 'yellow' \
+                            or node[node_index[path[p][source]]]['color'] == 'yellow' and node[node_index[path[p][target]]]['color'] == 'red':
+                            line_color = 'red'
+                        # line from red node to blue node.
+                        elif node[node_index[path[p][source]]]['color'] == 'red' and node[node_index[path[p][target]]]['color'] == 'blue' \
+                            or node[node_index[path[p][source]]]['color'] == 'blue' and node[node_index[path[p][target]]]['color'] == 'red':
+                            line_color = 'deepSkyBlue'
+                        # line from yellow node to blue node.
+                        elif node[node_index[path[p][source]]]['color'] == 'yellow' and node[node_index[path[p][target]]]['color'] == 'blue' \
+                            or node[node_index[path[p][source]]]['color'] == 'blue' and node[node_index[path[p][target]]]['color'] == 'yellow':
+                            line_color = 'yellow'
+                        else:
+                            line_color = 'white'
+                        edge.append({'source' : node_index[path[p][source]], 'target' :  node_index[path[p][target]], 'color':line_color})
+                        check_edge.append(pair)
+
+        # add original edges if not aready added
+        for ore in org_edges:
+            pair = sorted([org_nodes[ore['source']]['name'], org_nodes[ore['target']]['name']])
+            if pair not in check_edge:
+                # node_index['name'] = id
+                # org_nodes['name'] = 'dengue_fever'
+                # ore['source'] = node index
+                # --> node_index[org_nodes[id]['name']]
+                source_id = node_index[org_nodes[ore['source']]['name']]
+                target_id = node_index[org_nodes[ore['target']]['name']]
+                line_color = None
+                # line from red node to yellow node.
+                if node[source_id]['color'] == 'red' and node[target_id]['color'] == 'yellow' \
+                    or node[source_id]['color'] == 'yellow' and node[target_id]['color'] == 'red':
+                    line_color = 'red'
+                # line from red node to blue node.
+                elif node[source_id]['color'] == 'red' and node[target_id]['color'] == 'blue' \
+                    or node[source_id]['color'] == 'blue' and node[target_id]['color'] == 'red':
+                    line_color = 'deepSkyBlue'
+                # line from yellow node to blue node.
+                elif node[source_id]['color'] == 'yellow' and node[target_id]['color'] == 'blue' \
+                    or node[source_id]['color'] == 'blue' and node[target_id]['color'] == 'yellow':
+                    line_color = 'yellow'
+                else:
+                    line_color = 'white'
+                        
+                edge.append({'source' : source_id, 'target' :  target_id, 'color': line_color})
+                check_edge.append(pair)
+        print("done")
+    return node, edge
+
+# reduce nodes in range of distance from slider bar / minus distance
+def nodes_out_distance(centroid,main_nodes, org_nodes, org_edges, cost):
+
+    node = []
+    edge = []
+    node_index = dict()
+    node_id = 0
+    
+    # keep main nodes
+    except_nodes = []
+    for mn in main_nodes:
+        except_nodes.append(mn['name'])
+
+    # Graph nodes
+    # remove nodes that out of range
+    for n in org_nodes:
+        distance = n['cost']
+        if distance < cost or n['name'] in except_nodes:
+            node.append(n)
+            node_index[n['name']] = node_id
+            node_id += 1
+
+    # Graph edges
+    for e in org_edges:
+        source_name = org_nodes[e['source']]['name']
+        target_name = org_nodes[e['target']]['name']
+
+        if source_name in node_index and target_name in node_index:
+            source_id = node_index[source_name]
+            target_id = node_index[target_name]
             line_color = None
+
             # line from red node to yellow node.
-            if node[source_id]['color'] == 'red' and node[target_id]['color'] == 'yellow' \
-                or node[source_id]['color'] == 'yellow' and node[target_id]['color'] == 'red':
+            if node[source_id]['color']  == 'red' and node[target_id]['color']  == 'yellow' \
+                or node[source_id]['color']  == 'yellow' and node[target_id]['color'] == 'red':
                 line_color = 'red'
             # line from red node to blue node.
-            elif node[source_id]['color'] == 'red' and node[target_id]['color'] == 'blue' \
-                or node[source_id]['color'] == 'blue' and node[target_id]['color'] == 'red':
+            elif node[source_id]['color']  == 'red' and node[target_id]['color'] == 'blue' \
+                or node[source_id]['color']  == 'blue' and node[target_id]['color'] == 'red':
                 line_color = 'deepSkyBlue'
             # line from yellow node to blue node.
-            elif node[source_id]['color'] == 'yellow' and node[target_id]['color'] == 'blue' \
-                or node[source_id]['color'] == 'blue' and node[target_id]['color'] == 'yellow':
+            elif node[source_id]['color']  == 'yellow' and node[target_id]['color'] == 'blue' \
+                or node[source_id]['color']  == 'blue' and node[target_id]['color'] == 'yellow':
                 line_color = 'yellow'
             else:
                 line_color = 'white'
-                       
-            edge.append({'source' : source_id, 'target' :  target_id, 'color': line_color})
-            check_edge.append(pair)
-    print("done")
+
+            edge.append({'source' :  node_index[source_name], 'target' :  node_index[target_name], 'color': line_color})
+        
+    return node, edge
+
+# symptoms graph in range of distance from slider bar / plus distance
+def symptoms_in_distance(centroid,main_nodes, org_nodes, org_edges, cost):
+    node = [] # [ {name: node, 'color': 'blue', 'rgba': 'rgba(2, 69, 255)', 'x': 423, 'y': 437, 'fixed': True} ]
+    edge = [] # [ {source: node1, target: node2} ]
+    node_index = dict()
+    index_id = 0
+
+    #keep main nodes name in list
+    except_nodes = []
+    for mn in main_nodes:
+        except_nodes.append(mn['name'])
+
+    #check if there are have been adjust cost that higher than current cost.
+    have_higher_cost = False 
+    for orn in org_nodes:
+        if orn['name'] not in except_nodes:
+            if orn['cost'] > cost:
+                have_higher_cost = True
+                break
+    if have_higher_cost:
+        # Graph Nodes
+        for orn in org_nodes:
+            distance = orn['cost']
+            if distance < cost+1 or orn['name'] in except_nodes:
+                node.append(orn)
+                node_index[orn['name']] = index_id
+                index_id += 1
+        
+        # Graph Edges
+        for e in org_edges:
+            source_name = org_nodes[e['source']]['name']
+            target_name = org_nodes[e['target']]['name']
+            if source_name in node_index and target_name in node_index:
+                source_id = node_index[source_name]
+                target_id = node_index[target_name]
+                line_color = None
+
+                # line from red node to yellow node.
+                if node[source_id]['color']  == 'red' and node[target_id]['color']  == 'yellow' \
+                    or node[source_id]['color']  == 'yellow' and node[target_id]['color'] == 'red':
+                    line_color = 'red'
+                # line from red node to blue node.
+                elif node[source_id]['color']  == 'red' and node[target_id]['color'] == 'blue' \
+                    or node[source_id]['color']  == 'blue' and node[target_id]['color'] == 'red':
+                    line_color = 'deepSkyBlue'
+                # line from yellow node to blue node.
+                elif node[source_id]['color']  == 'yellow' and node[target_id]['color'] == 'blue' \
+                    or node[source_id]['color']  == 'blue' and node[target_id]['color'] == 'yellow':
+                    line_color = 'yellow'
+                else:
+                    line_color = 'white'
+
+                edge.append({'source' :  node_index[source_name], 'target' :  node_index[target_name], 'color': line_color})
+    
+    #first calculate in this cost
+    else:
+        lenght, path = nx.single_source_dijkstra(G, centroid, weight='cost', cutoff=cost)
+        neigbors_amount = len(lenght)
+        print("distance :", cost, " neighbors : ", neigbors_amount)
+        
+        # pos of nodes in main graph, after increase slider distance these nodes still on old position
+        except_pos = []
+        for orn in org_nodes:
+            x = orn['x']
+            y = orn['y']
+            except_pos.append({'x':x, 'y':y})
+
+        # Graph Nodes
+        for p in path:
+            if p not in node_index:
+                color= None
+                                        
+                # color
+                if G.node[p]['tag'] == 'DS' or G.node[p]['tag'] == 'DT':
+                    color = 'red'
+                elif G.node[p]['tag'] == 'ST':
+                    color = 'yellow'
+                else:
+                    color = 'blue'
+                                            
+                node_index[p] = index_id
+                node.append({'name': p , 'color':color, 'cost':lenght[p]})
+                index_id += 1
+                
+        # Set postition (x, y)
+        node = node_position_intersect(node, centroid, except_pos)
+
+        # add initial nodes
+        for orn in org_nodes:
+            # if node from neighbors calculation duplicate with orignal node, set original pos(x, y) to that node.
+            if orn['name'] in node_index:
+                i = node_index[orn['name']]
+                node[i]['x'] = orn['x']
+                node[i]['y'] = orn['y']
+
+            # add original node with original position
+            else:
+                node_index[orn['name']] = index_id
+                node.append(orn)
+                index_id += 1
+        # Graph Edges
+        check_edge = [] # for check if edge already exist.
+        # iterate path
+        for p in path:
+            for source in range(len(path[p])):
+                for target in range(source + 1, len(path[p])):
+                    pair = sorted([path[p][source], path[p][target]])
+                    if pair not in check_edge:
+                        line_color = None
+                        # line from red node to yellow node.
+                        if node[node_index[path[p][source]]]['color'] == 'red' and node[node_index[path[p][target]]]['color'] == 'yellow' \
+                            or node[node_index[path[p][source]]]['color'] == 'yellow' and node[node_index[path[p][target]]]['color'] == 'red':
+                            line_color = 'red'
+                        # line from red node to blue node.
+                        elif node[node_index[path[p][source]]]['color'] == 'red' and node[node_index[path[p][target]]]['color'] == 'blue' \
+                            or node[node_index[path[p][source]]]['color'] == 'blue' and node[node_index[path[p][target]]]['color'] == 'red':
+                            line_color = 'deepSkyBlue'
+                        # line from yellow node to blue node.
+                        elif node[node_index[path[p][source]]]['color'] == 'yellow' and node[node_index[path[p][target]]]['color'] == 'blue' \
+                            or node[node_index[path[p][source]]]['color'] == 'blue' and node[node_index[path[p][target]]]['color'] == 'yellow':
+                            line_color = 'yellow'
+                        else:
+                            line_color = 'white'
+                        edge.append({'source' : node_index[path[p][source]], 'target' :  node_index[path[p][target]], 'color':line_color})
+                        check_edge.append(pair)
+
+        # add original edges if not aready added
+        for ore in org_edges:
+            pair = sorted([org_nodes[ore['source']]['name'], org_nodes[ore['target']]['name']])
+            if pair not in check_edge:
+                # node_index['name'] = id
+                # org_nodes['name'] = 'dengue_fever'
+                # ore['source'] = node index
+                # --> node_index[org_nodes[id]['name']]
+                source_id = node_index[org_nodes[ore['source']]['name']]
+                target_id = node_index[org_nodes[ore['target']]['name']]
+                line_color = None
+                # line from red node to yellow node.
+                if node[source_id]['color'] == 'red' and node[target_id]['color'] == 'yellow' \
+                    or node[source_id]['color'] == 'yellow' and node[target_id]['color'] == 'red':
+                    line_color = 'red'
+                # line from red node to blue node.
+                elif node[source_id]['color'] == 'red' and node[target_id]['color'] == 'blue' \
+                    or node[source_id]['color'] == 'blue' and node[target_id]['color'] == 'red':
+                    line_color = 'deepSkyBlue'
+                # line from yellow node to blue node.
+                elif node[source_id]['color'] == 'yellow' and node[target_id]['color'] == 'blue' \
+                    or node[source_id]['color'] == 'blue' and node[target_id]['color'] == 'yellow':
+                    line_color = 'yellow'
+                else:
+                    line_color = 'white'
+                        
+                edge.append({'source' : source_id, 'target' :  target_id, 'color': line_color})
+                check_edge.append(pair)
+        print("done")
+    return node, edge
+
+# reduce symptoms graph corresponding to range of distance from slider bar / minus distance
+def symptoms_out_distance(centroid,main_nodes, org_nodes, org_edges, cost):
+    node = []
+    edge = []
+    node_index = dict()
+    node_id = 0
+    
+    # keep main nodes
+    except_nodes = []
+    for mn in main_nodes:
+        except_nodes.append(mn['name'])
+
+    # Graph nodes
+    # remove nodes that out of range
+    for n in org_nodes:
+        distance = n['cost']
+        if distance < cost or n['name'] in except_nodes:
+            node.append(n)
+            node_index[n['name']] = node_id
+            node_id += 1
+
+    # Graph edges
+    for e in org_edges:
+        source_name = org_nodes[e['source']]['name']
+        target_name = org_nodes[e['target']]['name']
+
+        if source_name in node_index and target_name in node_index:
+            source_id = node_index[source_name]
+            target_id = node_index[target_name]
+            line_color = None
+
+            # line from red node to yellow node.
+            if node[source_id]['color']  == 'red' and node[target_id]['color']  == 'yellow' \
+                or node[source_id]['color']  == 'yellow' and node[target_id]['color'] == 'red':
+                line_color = 'red'
+            # line from red node to blue node.
+            elif node[source_id]['color']  == 'red' and node[target_id]['color'] == 'blue' \
+                or node[source_id]['color']  == 'blue' and node[target_id]['color'] == 'red':
+                line_color = 'deepSkyBlue'
+            # line from yellow node to blue node.
+            elif node[source_id]['color']  == 'yellow' and node[target_id]['color'] == 'blue' \
+                or node[source_id]['color']  == 'blue' and node[target_id]['color'] == 'yellow':
+                line_color = 'yellow'
+            else:
+                line_color = 'white'
+
+            edge.append({'source' :  node_index[source_name], 'target' :  node_index[target_name], 'color': line_color})
+        
     return node, edge
 
 # set nodes position without check nodes overlap
-def node_position_intersect(node, centroid):
+def node_position_intersect(node, centroid, except_pos):
     xc = 275
     yc = 275
     node_size = 10
@@ -639,7 +954,7 @@ def node_position_intersect(node, centroid):
         'yellow':'rgba(172, 247, 32)',
         'blue':'rgba(2, 69, 255)'
     }
-    node_pos = []
+    node_pos = except_pos
 
     for n in node:
         x = None

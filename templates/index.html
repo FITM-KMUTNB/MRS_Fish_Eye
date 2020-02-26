@@ -724,17 +724,29 @@
     var cost_output = document.getElementById("distance_value");
     var nodes_output = document.getElementById("nodes_amount");
     var display_loader = document.getElementById('display_loader');
+    var cost = 1;
     nodes_output.innerHTML = nodes[0].length; // nodes amount default
     cost_output.innerHTML = slider.value;
 
     slider.oninput = function() {
-        cost_output.innerHTML = this.value;
-        display_loader.innerHTML = "<div class='loader'></div> ";
-        nodes_in_radius(this.value);
+        if(parseInt(this.value) > cost){
+            cost = parseInt(this.value);
+            cost_output.innerHTML = this.value;
+            display_loader.innerHTML = "<div class='loader'></div> ";
+            nodes_in_radius(this.value, 'plus');
+        }
+        else if(parseInt(this.value) < cost){
+            cost = parseInt(this.value);
+            cost_output.innerHTML = this.value;
+            display_loader.innerHTML = "<div class='loader'></div> ";
+            nodes_in_radius(this.value, 'minus');
+        }
+
+        
        
     }
 
-
+    // ******************* plus/minus button for adjust slider value *************
     $(function(){  
         $('span.minusbtn').click(function(e){
             e.preventDefault(); 
@@ -742,7 +754,7 @@
             slider.value = parseInt(slider.value)-1;
             cost_output.innerHTML = slider.value;
             display_loader.innerHTML = "<div class='loader'></div> ";
-            nodes_in_radius(slider.value);
+            nodes_in_radius(slider.value, 'minus');
         });
         $('span.plusbtn').click(function(e){
             e.preventDefault(); 
@@ -750,7 +762,7 @@
                 slider.value =  parseInt(slider.value)+1;
                 cost_output.innerHTML =  slider.value ;
                 display_loader.innerHTML = "<div class='loader'></div> ";
-                nodes_in_radius(slider.value);
+                nodes_in_radius(slider.value,  'plus');
                 
             }
         });
@@ -762,11 +774,11 @@
         cost_output.innerHTML = 1;
     }
 
-    function nodes_in_radius(cost){
+    function nodes_in_radius(cost, expression){
         $.ajax({
                 url: "/nodes_radius",
                 type: "post", //send it through get method
-                data:{'cost': cost},
+                data:{'cost': cost, 'expression':expression},
                
             })
             .done(function(data){

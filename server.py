@@ -169,10 +169,23 @@ def direct_connected_nodes():
     global edges_radius
     global symptoms_graph
     symptoms_graph= False
+
     selectednode = request.form['selectednode']
     nodes_radius, edges_radius = backend.get_direct_connected_nodes(selectednode, nodes_radius, edges_radius)
     
     return jsonify({'nodes':nodes_radius, 'edges':edges_radius})
+
+# closest of selected node in co-occurrence graph
+@app.route('/closest_nodes', methods=['GET','POST'])
+def closest_nodes():
+    global nodes_radius
+    global edges_radius
+    global symptoms_graph
+    symptoms_graph= False
+
+    selectednode = request.form['selectednode']
+    nodes_radius, edges_radius = backend.get_closest_nodes(selectednode, nodes_radius, edges_radius)
+
 
 if __name__ == "__main__":
     app.run(debug=True)

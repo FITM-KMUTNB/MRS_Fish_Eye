@@ -96,7 +96,8 @@
                     'Move to center',
                     'Add keyword',
                     'Remove node',
-                    'Direct connected'
+                    'Direct connected',
+                    //'Closest nodes'
                     ];
         var symptomlist = [];
         var ullist = document.getElementById('symtomslist');
@@ -270,7 +271,9 @@
                                     else if(clickmenu == 'Direct connected'){
                                         direct_connected_nodes(d);
                                     }
-                                    
+                                    //else if(clickmenu == 'Closest nodes'){
+                                        //closest_nodes_graph(d);
+                                    //}
                                     d3.select('.context-menu').style('display', 'none');
                                 });
 
@@ -523,18 +526,38 @@
 
             // for disease list that the result from python.
             var number = 1;
-            for(disease in py_diseases){
+            var sorted_disease = {};
+            console.log(py_diseases);
+            
+            var sortable = [];
+
+            for (var candidate in py_diseases) {
+                sortable.push([candidate, py_diseases[candidate][0]]);
+            }
+
+            sortable.sort(function(a, b) {
+                return a[1] - b[1];
+            });
+           
+            console.log(sortable)
+       
+                
+          
+            for(s in sortable){
                 var newElement = document.createElement('TR');
+                var name = sortable[s][0]
+                var distance = sortable[s][1]
+                var hop = py_diseases[sortable[s][0]][1]
+
                 diseasetable.appendChild(newElement)
                 newElement.innerHTML = "<td>"+number+".</td>";
                 // display disease name.
-                newElement.innerHTML += "<td style='text-align:left; '>"+disease+"</td>";
-                // iterate dict value --> distance, hop  
-                for(i = 0; i < py_diseases[disease].length; i++){
-                    newElement.innerHTML += "<td style='text-align:center; '>"+py_diseases[disease][i]+"</td>";
-                   
-                }
-                newElement.innerHTML += "<td style='text-align:center; '><button class='symptombtn' onclick='get_node_symptoms({name:\""+disease+"\"})'>Show</button></td>";
+                newElement.innerHTML += "<td style='text-align:left; '>"+name+"</td>";
+                // distance, hop  
+                newElement.innerHTML += "<td style='text-align:center; '>"+distance+"</td>";
+                newElement.innerHTML += "<td style='text-align:center; '>"+hop+"</td>";
+
+                newElement.innerHTML += "<td style='text-align:center; '><button class='symptombtn' onclick='get_node_symptoms({name:\""+name+"\"})'>Show</button></td>";
                 number++;
             }
         }
@@ -613,6 +636,31 @@
             console.log("Get direct connected of :"+d.name);
             $.ajax({
                 url: "/direct_connected_nodes",
+                type: "post", //send it through get method
+                data:{'selectednode': d.name},
+               
+            })
+            .done(function(data){
+                if(data.error){
+                    console.log("Error")
+                }
+                else{
+                    remove_graph();
+                    dataset = {
+                        nodes: data.nodes,
+                        edges: data.edges
+                    };
+                    create_graph();
+                    reset_cost_nodes_output();
+                }
+            });
+        }
+        
+        // ************************* Closest nodes graph ********************************
+        function closest_nodes_graph(d){
+            console.log("Closest nodes of :"+d.name);
+            $.ajax({
+                url: "/closest_nodes",
                 type: "post", //send it through get method
                 data:{'selectednode': d.name},
                

@@ -3,7 +3,7 @@ import operator
 import random
 import math 
 
-G = nx.read_gpickle("graph/221disease.gpickle")
+G = nx.read_gpickle("graph/201th.gpickle")
 print(nx.info(G))
 
 def check_keyword_exist(keywords):
@@ -1109,8 +1109,107 @@ def get_direct_connected_nodes(selectednode, nodes, edges):
 
     return direct_nodes, direct_edges
 
+# display closest of selected node in co-occurrence graph
+def get_closest_nodes(selectednode, nodes, edges):
+    node = nodes # [ {name: node, 'color': 'blue', 'rgba': 'rgba(2, 69, 255)', 'x': 423, 'y': 437, 'fixed': True} ]
+    edge = edges # [ {source: node1, target: node2} ]
+    node_index = dict()
+    index_id = 0
+    node_pos = [] #for check overlap
     
-#sp_path, allpath, pathcost = centroid_shotest_path(['allergy', 'asthma'], ['itch','headache','fever'], 'dengue_fever')
-#all_path_graph(allpath, pathcost, 'dengue_fever')
-#lenght, path = nx.single_source_dijkstra(G, 'dengue_fever', weight='cost', cutoff=30)
-#print(len(lenght))
+
+    for n in node:
+        node_index[n['name']] = index_id
+        node_pos.append({'x':n['x'], 'y':n['y']})
+        index_id += 1
+
+    lenght, path = nx.single_source_dijkstra(G, selectednode, weight='cost')
+    limit = 0
+    temp_nodes = []
+    temp_path = dict()
+    for p in path:
+        if G.node[p]['tag'] == 'NN':
+            temp_nodes.append({'name':p, 'color':'blue', 'cost':lenght[p]})
+            temp_path.append(path[p])
+    
+    xc = 275
+    yc = 275
+    node_size = 10
+    circle_coordinates = {
+        'circle1':{'x1':225,'x2':325,'y1':225,'y2':325,'r':50},
+        'circle2':{'x1':125,'x2':425,'y1':125,'y2':425,'r':150},
+        'circle3':{'x1':75,'x2':475,'y1':75,'y2':475,'r':200},
+        'circle4':{'x1':0,'x2':550,'y1':0,'y2':550,'r':275},
+    }
+    color = {
+        'red':'rgba(247, 32, 32, 1)',
+        'yellow':'rgba(172, 247, 32)',
+        'blue':'rgba(2, 69, 255)'
+    }
+    
+    for n in temp_nodes:
+        x = None
+        y = None
+        n['rgba'] = color['blue']
+        x1 = circle_coordinates['circle4']['x1']
+        x2 = circle_coordinates['circle4']['x2']
+        y1 = circle_coordinates['circle4']['y1']
+        y2 = circle_coordinates['circle4']['y2']
+
+        while True:
+            while True:
+                x = random.randint(x1,x2) 
+                y = random.randint(y1,y2)
+                d = math.sqrt((x - xc)**2  + (y - yc)**2)
+
+                # if point outside circle1
+                if d-node_size > circle_coordinates['circle3']['r']:
+                    break
+            
+            d = math.sqrt((x - xc)**2  + (y - yc)**2)
+            # if point inside circle2
+            if d + node_size*2 < circle_coordinates['circle4']['r']:
+                    # check node intersect
+                intersect = False
+                for c2 in node_pos:
+                    c1c2 = math.sqrt((x - c2['x'])**2 + (y- c2['y'])**2)
+                    if c1c2 < 20*2: # 20 = r1+r2
+                        intersect = True
+                if not intersect:
+                    node_pos.append({'x':x, 'y':y})
+                    break
+        n['x'] = x
+        n['y'] = y
+        n['fixed'] = True
+
+    for n in temp_nodes:
+        node.append(n)
+        node_index[n['name']] = index_id
+        index_id += 1
+
+    # Store edge info
+    check_edge = [] # for check if edge already exist.
+    # iterate path
+    for p in temp_path:
+        for source in range(len(p)):
+            for target in range(source + 1, len(p)):
+                pair = sorted([p[source], p[target]])
+                if pair not in check_edge:
+                    line_color = None
+                    # line from red node to yellow node.
+                    if node[node_index[p[source]]]['color'] == 'red' and node[node_index[p[target]]]['color'] == 'yellow' \
+                        or node[node_index[p[source]]]['color'] == 'yellow' and node[node_index[p[target]]]['color'] == 'red':
+                        line_color = 'red'
+                    # line from red node to blue node.
+                    elif node[node_index[p[source]]]['color'] == 'red' and node[node_index[p[target]]]['color'] == 'blue' \
+                        or node[node_index[p[source]]]['color'] == 'blue' and node[node_index[p[target]]]['color'] == 'red':
+                        line_color = 'deepSkyBlue'
+                    # line from yellow node to blue node.
+                    elif node[node_index[p[source]]]['color'] == 'yellow' and node[node_index[p[target]]]['color'] == 'blue' \
+                        or node[node_index[p[source]]]['color'] == 'blue' and node[node_index[p[target]]]['color'] == 'yellow':
+                        line_color = 'yellow'
+                    else:
+                        line_color = 'white'
+                    edge.append({'source' : node_index[p[source]], 'target' :  node_index[p[target]], 'color':line_color})
+                    check_edge.append(pair)
+    return node, edge

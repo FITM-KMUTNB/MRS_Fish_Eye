@@ -4,6 +4,7 @@ import random
 import math 
 
 G = nx.read_gpickle("graph/201th.gpickle")
+#G = nx.read_gpickle("graph/221disease.gpickle")
 print(nx.info(G))
 
 def check_keyword_exist(keywords):
@@ -106,76 +107,6 @@ def get2node_path(source, target):
 
     return node_path[target], node_distance[target]
    
-def create_graph(disease, path, centroid):
-    node = [] # [{name: node}]
-    edge = [] # [{source: node1, target: node2}]
-    node_index = dict()
-    temp_path = [] # [[path1], [n]]
-    index_id = 0
- 
-    # Store node info
-    # iterate disease list
-    for d in disease:
-        # path of each keyword to disease --> [{from symptom1}, {n}]
-        for index in range(len(path)):
-            # check if disease have path to current symptom list.
-            if d in path[index]:
-                # keep path list for edge info.
-                temp_path.append(path[index][d])
-                # iterate node from source to target and store to node list.
-                for p in path[index][d]:
-                    if p not in node_index:
-                        color= None
-                                             
-                        # color
-                        if G.node[p]['tag'] == 'DS' or G.node[p]['tag'] == 'DT':
-                            color = 'red'
-                        elif G.node[p]['tag'] == 'ST':
-                            color = 'yellow'
-                        else :
-                            color = 'blue'
-                                                 
-                        node_index[p] = index_id
-                        node.append({'name': p , 'color':color})
-                        index_id += 1
-
-    d_list = list(disease)
-    # Link between disease
-    for d1 in range(len(d_list)):
-        for d2 in range(d1+1, len(d_list)):
-            getpath, distance = get2node_path(d_list[d1], d_list[d2])
-            temp_path.append(getpath)
-            # add node
-            for n in getpath:
-                if n not in node_index:
-                    color= None
-                    if G.node[n]['tag'] == 'DS' or G.node[n]['tag'] == 'DT':
-                        color = 'red'
-                    elif G.node[n]['tag'] == 'ST':
-                        color = 'yellow'
-                    else :
-                        color = 'blue'
-                        
-                    node_index[n] = index_id
-                    node.append({'name': n , 'color':color})
-                    index_id += 1
-
-    # Set postition (x, y)
-    node = node_position(node, centroid)
- 
-    # Store edge info
-    check_edge = [] # for check if edge already exist
-    # iterate path
-    for p in temp_path:
-        for source in range(len(p)):
-            for target in range(source + 1, len(p)):
-                pair = sorted([p[source], p[target]])
-                if pair not in check_edge:
-                    edge.append({'source' : node_index[p[source]], 'target' :  node_index[p[target]]})
-                    check_edge.append(pair)
-    
-    return node, edge
-
 def node_position(node, centroid):
     xc = 275
     yc = 275
@@ -482,47 +413,6 @@ def node_symptoms_graph(node):
                     
     return graph_node, graph_edge
 
-# not use
-def all_path_graph(path, pathcost, centroid):
-    node = [] # [{name: node}]
-    edge = [] # [{source: node1, target: node2}]
-    node_index = dict()
-    index_id = 0
-
-    # Graph Nodes
-    for p in path:
-        if p not in node_index:
-            color= None
-                                    
-            # color
-            if G.node[p]['tag'] == 'DS' or G.node[p]['tag'] == 'DT':
-                color = 'red'
-            elif G.node[p]['tag'] == 'ST':
-                color = 'yellow'
-            else:
-                color = 'blue'
-                                        
-            node_index[p] = index_id
-            node.append({'name': p , 'color':color, 'cost':pathcost[p]})
-            index_id += 1
-
-    # Set postition (x, y)
-    node = node_position(node, centroid)
-
-    # Graph Edges
-    check_edge = [] # for check if edge already exist.
-    # iterate path
-    for p in path:
-        for source in range(len(p)):
-            for target in range(source + 1, len(p)):
-                pair = sorted([p[source], p[target]])
-            
-                if pair not in check_edge:
-                    edge.append({'source' : node_index[p[source]], 'target' :  node_index[p[target]]})
-                    check_edge.append(pair)
- 
-    return node, edge
-
 # display more nodes in range of distance from slider bar/ plus distance
 def nodes_in_distance(centroid,main_nodes, org_nodes, org_edges, cost):
     node = [] # [ {name: node, 'color': 'blue', 'rgba': 'rgba(2, 69, 255)', 'x': 423, 'y': 437, 'fixed': True} ]
@@ -550,7 +440,20 @@ def nodes_in_distance(centroid,main_nodes, org_nodes, org_edges, cost):
                 node.append(orn)
                 node_index[orn['name']] = index_id
                 index_id += 1
-        
+
+        nodes_amount = len(node_index)
+        node_r = 6
+        if nodes_amount > 60 and nodes_amount < 90:
+            node_r = 5
+        elif nodes_amount >= 90 and nodes_amount < 110:
+            node_r = 4
+        elif nodes_amount >= 110 and nodes_amount < 140:
+            node_r = 3
+        elif nodes_amount >= 140 and nodes_amount < 170:
+            node_r = 2
+        elif nodes_amount >= 170:
+            node_r = 1
+
         # Graph Edges
         for e in org_edges:
             source_name = org_nodes[e['source']]['name']
@@ -606,9 +509,31 @@ def nodes_in_distance(centroid,main_nodes, org_nodes, org_edges, cost):
                 node_index[p] = index_id
                 node.append({'name': p , 'color':color, 'cost':lenght[p]})
                 index_id += 1
+
+        # check nodes amount for set nodes radius
+        nodes_list = []
+        for n in org_nodes:
+            if n['name'] not in nodes_list:
+                nodes_list.append(n['name'])
+        for n in node_index:
+            if n not in nodes_list:
+                nodes_list.append(n)
                 
+        nodes_amount = len(nodes_list)
+        node_r = 6
+        if nodes_amount > 60 and nodes_amount < 90:
+            node_r = 5
+        elif nodes_amount >= 90 and nodes_amount < 110:
+            node_r = 4
+        elif nodes_amount >= 110 and nodes_amount < 140:
+            node_r = 3
+        elif nodes_amount >= 140 and nodes_amount < 170:
+            node_r = 2
+        elif nodes_amount >= 170:
+            node_r = 1
+
         # Set postition (x, y)
-        node = node_position_intersect(node, centroid, except_pos)
+        node = node_position_intersect(node, centroid, except_pos, node_r)
 
         # add initial nodes
         for orn in org_nodes:
@@ -678,10 +603,10 @@ def nodes_in_distance(centroid,main_nodes, org_nodes, org_edges, cost):
                 edge.append({'source' : source_id, 'target' :  target_id, 'color': line_color})
                 check_edge.append(pair)
         print("done")
-    return node, edge
+    return node, edge, node_r
 
 # reduce nodes in range of distance from slider bar / minus distance
-def nodes_out_distance(centroid,main_nodes, org_nodes, org_edges, cost):
+def nodes_out_distance(centroid,main_nodes, org_nodes, org_edges, cost, current_nodesize):
 
     node = []
     edge = []
@@ -702,6 +627,23 @@ def nodes_out_distance(centroid,main_nodes, org_nodes, org_edges, cost):
             node_index[n['name']] = node_id
             node_id += 1
 
+     
+     # check nodes amount for set nodes radius
+    nodes_amount = len(node)
+    node_r = current_nodesize
+    if nodes_amount > 60 and nodes_amount < 90:
+        node_r = 5
+    elif nodes_amount >= 90 and nodes_amount < 110:
+        node_r = 4
+    elif nodes_amount >= 110 and nodes_amount < 140:
+        node_r = 3
+    elif nodes_amount >= 140 and nodes_amount < 170:
+        node_r = 2
+    elif nodes_amount >= 170:
+        node_r = 1
+    else:
+        node_r = 6
+   
     # Graph edges
     for e in org_edges:
         source_name = org_nodes[e['source']]['name']
@@ -729,7 +671,7 @@ def nodes_out_distance(centroid,main_nodes, org_nodes, org_edges, cost):
 
             edge.append({'source' :  node_index[source_name], 'target' :  node_index[target_name], 'color': line_color})
         
-    return node, edge
+    return node, edge, node_r
 
 # symptoms graph in range of distance from slider bar / plus distance
 def symptoms_in_distance(centroid,main_nodes, org_nodes, org_edges, cost):
@@ -759,6 +701,20 @@ def symptoms_in_distance(centroid,main_nodes, org_nodes, org_edges, cost):
                 node_index[orn['name']] = index_id
                 index_id += 1
         
+        # check nodes amount for set nodes radius
+        nodes_amount = len(node_index)
+        node_r = 6
+        if nodes_amount > 60 and nodes_amount < 90:
+            node_r = 5
+        elif nodes_amount >= 90 and nodes_amount < 110:
+            node_r = 4
+        elif nodes_amount >= 110 and nodes_amount < 140:
+            node_r = 3
+        elif nodes_amount >= 140 and nodes_amount < 170:
+            node_r = 2
+        elif nodes_amount >= 170:
+            node_r = 1
+
         # Graph Edges
         for e in org_edges:
             source_name = org_nodes[e['source']]['name']
@@ -815,8 +771,30 @@ def symptoms_in_distance(centroid,main_nodes, org_nodes, org_edges, cost):
                 node.append({'name': p , 'color':color, 'cost':lenght[p]})
                 index_id += 1
                 
+        # check nodes amount for set nodes radius
+        nodes_list = []
+        for n in org_nodes:
+            if n['name'] not in nodes_list:
+                nodes_list.append(n['name'])
+        for n in node_index:
+            if n not in nodes_list:
+                nodes_list.append(n)
+                
+        nodes_amount = len(nodes_list)
+        node_r = 6
+        if nodes_amount > 60 and nodes_amount < 90:
+            node_r = 5
+        elif nodes_amount >= 90 and nodes_amount < 110:
+            node_r = 4
+        elif nodes_amount >= 110 and nodes_amount < 140:
+            node_r = 3
+        elif nodes_amount >= 140 and nodes_amount < 170:
+            node_r = 2
+        elif nodes_amount >= 170:
+            node_r = 1
+
         # Set postition (x, y)
-        node = node_position_intersect(node, centroid, except_pos)
+        node = node_position_intersect(node, centroid, except_pos,node_r)
 
         # add initial nodes
         for orn in org_nodes:
@@ -886,10 +864,10 @@ def symptoms_in_distance(centroid,main_nodes, org_nodes, org_edges, cost):
                 edge.append({'source' : source_id, 'target' :  target_id, 'color': line_color})
                 check_edge.append(pair)
         print("done")
-    return node, edge
+    return node, edge, node_r
 
 # reduce symptoms graph corresponding to range of distance from slider bar / minus distance
-def symptoms_out_distance(centroid,main_nodes, org_nodes, org_edges, cost):
+def symptoms_out_distance(centroid,main_nodes, org_nodes, org_edges, cost, current_nodesize):
     node = []
     edge = []
     node_index = dict()
@@ -908,6 +886,22 @@ def symptoms_out_distance(centroid,main_nodes, org_nodes, org_edges, cost):
             node.append(n)
             node_index[n['name']] = node_id
             node_id += 1
+
+    # check nodes amount for set nodes radius
+    nodes_amount = len(node)
+    node_r = current_nodesize
+    if nodes_amount > 60 and nodes_amount < 90:
+        node_r = 5
+    elif nodes_amount >= 90 and nodes_amount < 110:
+        node_r = 4
+    elif nodes_amount >= 110 and nodes_amount < 140:
+        node_r = 3
+    elif nodes_amount >= 140 and nodes_amount < 170:
+        node_r = 2
+    elif nodes_amount >= 170:
+        node_r = 1
+    else:
+        node_r = 6
 
     # Graph edges
     for e in org_edges:
@@ -936,10 +930,10 @@ def symptoms_out_distance(centroid,main_nodes, org_nodes, org_edges, cost):
 
             edge.append({'source' :  node_index[source_name], 'target' :  node_index[target_name], 'color': line_color})
         
-    return node, edge
+    return node, edge, node_r
 
 # set nodes position without check nodes overlap
-def node_position_intersect(node, centroid, except_pos):
+def node_position_intersect(node, centroid, except_pos, node_r):
     xc = 275
     yc = 275
     node_size = 10
@@ -997,10 +991,11 @@ def node_position_intersect(node, centroid, except_pos):
                     intersect = False
                     for c2 in node_pos:
                         c1c2 = math.sqrt((x - c2['x'])**2 + (y- c2['y'])**2)
-                        if c1c2 < 20*2: # 20 = r1+r2
+                        interval = node_r * 2 * 2 + 3 # 2 node size(radius * 2) + interval between nodes
+                        if c1c2 < interval: # 20 = r1+r2
                             intersect = True
-                    #if not intersect:
-                    if True:
+                    if not intersect:
+                    #if True:
                         node_pos.append({'x':x, 'y':y})
                         break
         # circle 3
@@ -1017,21 +1012,22 @@ def node_position_intersect(node, centroid, except_pos):
                     y = random.randint(y1,y2)
                     d = math.sqrt((x - xc)**2  + (y - yc)**2)
 
-                    # if point outside circle1
+                    # if point outside circle2
                     if d-node_size > circle_coordinates['circle2']['r']:
                         break
               
                 d = math.sqrt((x - xc)**2  + (y - yc)**2)
-                # if point inside circle2
+                # if point inside circle3
                 if d + node_size < circle_coordinates['circle3']['r']:
                      # check node intersect
                     intersect = False
                     for c2 in node_pos:
                         c1c2 = math.sqrt((x - c2['x'])**2 + (y- c2['y'])**2)
-                        if c1c2 < 20*2: # 20 = r1+r2
+                        interval = node_r * 2 * 2 + 3 # 2 node size(radius * 2) + interval between nodes
+                        if c1c2 < interval: # 20 = r1+r2
                             intersect = True
-                    #if not intersect:
-                    if True:
+                    if not intersect:
+                    #if True:
                         node_pos.append({'x':x, 'y':y})
                         break
 
@@ -1049,21 +1045,22 @@ def node_position_intersect(node, centroid, except_pos):
                     y = random.randint(y1,y2)
                     d = math.sqrt((x - xc)**2  + (y - yc)**2)
 
-                    # if point outside circle1
+                    # if point outside circle3
                     if d-node_size > circle_coordinates['circle3']['r']:
                         break
               
                 d = math.sqrt((x - xc)**2  + (y - yc)**2)
-                # if point inside circle2
+                # if point inside circle4
                 if d + node_size*2 < circle_coordinates['circle4']['r']:
                      # check node intersect
                     intersect = False
                     for c2 in node_pos:
                         c1c2 = math.sqrt((x - c2['x'])**2 + (y- c2['y'])**2)
-                        if c1c2 < 20*2: # 20 = r1+r2
+                        interval = node_r * 2 * 2 + 3 # 2 node size(radius * 2) + interval between nodes
+                        if c1c2 < interval: # 20 = r1+r2
                             intersect = True
-                    #if not intersect:
-                    if True:
+                    if not intersect:
+                    #if True:
                         node_pos.append({'x':x, 'y':y})
                         break
         n['x'] = x
@@ -1081,12 +1078,14 @@ def get_direct_connected_nodes(selectednode, nodes, edges):
 
     for e in edges:
         if nodes[e['source']]['name'] == selectednode or nodes[e['target']]['name'] == selectednode:
-            direct_nodes.append(nodes[e['source']])
-            node_index[nodes[e['source']]['name']] = node_id
-            node_id += 1
-            direct_nodes.append(nodes[e['target']])
-            node_index[nodes[e['target']]['name']] = node_id
-            node_id += 1
+            if nodes[e['source']]['name'] not in node_index:
+                direct_nodes.append(nodes[e['source']])
+                node_index[nodes[e['source']]['name']] = node_id
+                node_id += 1
+            if nodes[e['target']]['name'] not in node_index:
+                direct_nodes.append(nodes[e['target']])
+                node_index[nodes[e['target']]['name']] = node_id
+                node_id += 1
 
             line_color = None
             # line from red node to yellow node.
@@ -1109,107 +1108,27 @@ def get_direct_connected_nodes(selectednode, nodes, edges):
 
     return direct_nodes, direct_edges
 
-# display closest of selected node in co-occurrence graph
-def get_closest_nodes(selectednode, nodes, edges):
-    node = nodes # [ {name: node, 'color': 'blue', 'rgba': 'rgba(2, 69, 255)', 'x': 423, 'y': 437, 'fixed': True} ]
-    edge = edges # [ {source: node1, target: node2} ]
-    node_index = dict()
-    index_id = 0
-    node_pos = [] #for check overlap
+# get closest nodes to select node
+def get_closest_nodes(selectnode, existnodes):
     
+    closestnodes = dict()
+    lenght, path = nx.single_source_dijkstra(G, selectnode, weight='cost')
+    except_nodes = []
 
-    for n in node:
-        node_index[n['name']] = index_id
-        node_pos.append({'x':n['x'], 'y':n['y']})
-        index_id += 1
+    for en in existnodes:
+        except_nodes.append(en['name'])
 
-    lenght, path = nx.single_source_dijkstra(G, selectednode, weight='cost')
-    limit = 0
-    temp_nodes = []
-    temp_path = dict()
-    for p in path:
-        if G.node[p]['tag'] == 'NN':
-            temp_nodes.append({'name':p, 'color':'blue', 'cost':lenght[p]})
-            temp_path.append(path[p])
+    limit = 10
+    for n in lenght:
+        if n not in except_nodes:
+            distance = float(format(lenght[n] , '.2f'))
+            closestnodes[n] = [distance, G.node[n]['tag']]
+            if len(closestnodes) == 10:
+                break
     
-    xc = 275
-    yc = 275
-    node_size = 10
-    circle_coordinates = {
-        'circle1':{'x1':225,'x2':325,'y1':225,'y2':325,'r':50},
-        'circle2':{'x1':125,'x2':425,'y1':125,'y2':425,'r':150},
-        'circle3':{'x1':75,'x2':475,'y1':75,'y2':475,'r':200},
-        'circle4':{'x1':0,'x2':550,'y1':0,'y2':550,'r':275},
-    }
-    color = {
-        'red':'rgba(247, 32, 32, 1)',
-        'yellow':'rgba(172, 247, 32)',
-        'blue':'rgba(2, 69, 255)'
-    }
+    return closestnodes
+
+
+
+
     
-    for n in temp_nodes:
-        x = None
-        y = None
-        n['rgba'] = color['blue']
-        x1 = circle_coordinates['circle4']['x1']
-        x2 = circle_coordinates['circle4']['x2']
-        y1 = circle_coordinates['circle4']['y1']
-        y2 = circle_coordinates['circle4']['y2']
-
-        while True:
-            while True:
-                x = random.randint(x1,x2) 
-                y = random.randint(y1,y2)
-                d = math.sqrt((x - xc)**2  + (y - yc)**2)
-
-                # if point outside circle1
-                if d-node_size > circle_coordinates['circle3']['r']:
-                    break
-            
-            d = math.sqrt((x - xc)**2  + (y - yc)**2)
-            # if point inside circle2
-            if d + node_size*2 < circle_coordinates['circle4']['r']:
-                    # check node intersect
-                intersect = False
-                for c2 in node_pos:
-                    c1c2 = math.sqrt((x - c2['x'])**2 + (y- c2['y'])**2)
-                    if c1c2 < 20*2: # 20 = r1+r2
-                        intersect = True
-                if not intersect:
-                    node_pos.append({'x':x, 'y':y})
-                    break
-        n['x'] = x
-        n['y'] = y
-        n['fixed'] = True
-
-    for n in temp_nodes:
-        node.append(n)
-        node_index[n['name']] = index_id
-        index_id += 1
-
-    # Store edge info
-    check_edge = [] # for check if edge already exist.
-    # iterate path
-    for p in temp_path:
-        for source in range(len(p)):
-            for target in range(source + 1, len(p)):
-                pair = sorted([p[source], p[target]])
-                if pair not in check_edge:
-                    line_color = None
-                    # line from red node to yellow node.
-                    if node[node_index[p[source]]]['color'] == 'red' and node[node_index[p[target]]]['color'] == 'yellow' \
-                        or node[node_index[p[source]]]['color'] == 'yellow' and node[node_index[p[target]]]['color'] == 'red':
-                        line_color = 'red'
-                    # line from red node to blue node.
-                    elif node[node_index[p[source]]]['color'] == 'red' and node[node_index[p[target]]]['color'] == 'blue' \
-                        or node[node_index[p[source]]]['color'] == 'blue' and node[node_index[p[target]]]['color'] == 'red':
-                        line_color = 'deepSkyBlue'
-                    # line from yellow node to blue node.
-                    elif node[node_index[p[source]]]['color'] == 'yellow' and node[node_index[p[target]]]['color'] == 'blue' \
-                        or node[node_index[p[source]]]['color'] == 'blue' and node[node_index[p[target]]]['color'] == 'yellow':
-                        line_color = 'yellow'
-                    else:
-                        line_color = 'white'
-                    edge.append({'source' : node_index[p[source]], 'target' :  node_index[p[target]], 'color':line_color})
-                    check_edge.append(pair)
-    return node, edge

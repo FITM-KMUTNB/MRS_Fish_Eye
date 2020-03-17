@@ -118,7 +118,7 @@
 }
 .symptomsubmitbtn{
     margin: 0 auto;
-    background: rgb(1, 103, 185,.5);
+    background: rgba(3, 61, 109, 0.5);
     padding: 4px 6px;
     font-size: 12px;
     border: none;
@@ -129,7 +129,20 @@
 
 .symptomsubmitbtn:hover {
     color: rgb(5, 100, 163);
-    background: rgb(156, 204, 236);
+    background: rgb(166, 203, 228);
+}
+
+.symptomstable{
+  position: relative;
+  width: 383px;
+  margin-top: 10px;
+  margin-left: 10px;
+  color: rgb(156, 204, 236);
+}
+.symptomstable td{
+  padding: 5px;
+  font-family: Arial; font-size: 10pt;
+  font-weight: bold;
 }
 /* Result Table */
 

@@ -42,16 +42,17 @@
     <div id="symptoms-block">
         <div style="padding: 10px;">
         <p style="border:1px; border-style:solid; border-color:rgb(15, 153, 217); padding: 5px; color: #e8ebee;">
-            Symptoms
+            Keywords
         </p>
         </div>
+           
         <!-- Display symptoms list -->
-        <ul class="symplist" id="symtomslist">
-        </ul> 
-
+        <table class="symptomstable" id="symtomslist">
+        </table>
+        <!--
         <input class="symptominput-list" type="text" id="symptomitem"> 
         <button class="symptomaddbtn" id="addsymptom">Add</button>
-        <div align="center"><button class="symptomsubmitbtn" onclick="centroid_calculation()">Submit</button></div>
+        <div align="center"><button class="symptomsubmitbtn" onclick="centroid_calculation()">Submit</button></div>-->
         
     </div>
     <!-- Table result block-->
@@ -69,10 +70,12 @@
     
     <script src="https://d3js.org/d3.v3.min.js"></script>
     <script type="text/javascript">
+        
         var w = 550;
 		var h = 550;
         var ptop = 70;
         var pright = 250;
+        var node_radius = 6;
         var py_symptoms = JSON.parse('{{ symptoms|tojson }}');
         var py_diseases = JSON.parse('{{ diseases|tojson }}');
  		var dataset = {
@@ -94,10 +97,9 @@
         var menu = [
                     'Info',
                     'Move to center',
-                    'Add keyword',
                     'Remove node',
                     'Direct connected',
-                    //'Closest nodes'
+                    'More relevant'
                     ];
         var symptomlist = [];
         var ullist = document.getElementById('symtomslist');
@@ -203,14 +205,14 @@
                         .style("stroke", function(d){
                             return d.color;
                         })
-                        .style("stroke-opacity", .2)
-                        .style("stroke-width", 2)
+                        .style("stroke-opacity", .5)
+                        .style("stroke-width", 0.5)
                         //.style("filter", "drop-shadow(0px 0px 2px rgb(15, 153, 217))")
 
             nodes = zoomContainer.selectAll("circle")
 						.data(dataset.nodes)
 				        .enter().append("circle")
-                        .attr("r", 6)
+                        .attr("r", node_radius)
                         .style("filter", function (d) {
                             // Label input symptoms by color
                             if(symptomlist.includes(d.name)){
@@ -271,9 +273,9 @@
                                     else if(clickmenu == 'Direct connected'){
                                         direct_connected_nodes(d);
                                     }
-                                    //else if(clickmenu == 'Closest nodes'){
-                                        //closest_nodes_graph(d);
-                                    //}
+                                    else if(clickmenu == 'More relevant'){
+                                        more_relevant(d);
+                                    }
                                     d3.select('.context-menu').style('display', 'none');
                                 });
 
@@ -295,7 +297,7 @@
 					    .style("text-anchor", "middle")
 					    .style("fill", "rgb(156, 204, 236)")
 					    .style("font-family", "Arial")
-					    .style("font-size", 12);
+					    .style("font-size", (node_radius*2+2)+"px");
             
             force.on("tick", tick);
         }
@@ -426,6 +428,7 @@
                 }
                 else{
                     remove_graph();
+                    node_radius = 6;
                     dataset = {
                         nodes: data.nodes,
                         edges: data.edges
@@ -436,29 +439,7 @@
             });
         }
         
-        // ************************* Re-Calculate centroid ****************************** 
-        function centroid_calculation(){
-            $.ajax({
-                url: "/re_centroid",
-                type: "post", //send it through get method
-                data:JSON.stringify({'symptoms': symptomlist}),
-                contentType: "application/json; charset=utf-8",
-                success: function (data) {
-                    //$("body").html(response);
-                    py_diseases = data.diseases;
-                    dataset = {
-                        nodes: data.node,
-                        edges: data.edge
-                    };
-                    diseasetable.innerHTML = "";
-                    get_diseaseslist();
-                    remove_graph();
-                    create_graph();
-                    reset_cost_nodes_output();
-                    }
-                })
-        }
-               
+         
         // ************************* Get main centroid graph ****************************
         function centroid_graph(){
             $.ajax({
@@ -475,6 +456,7 @@
                         nodes: data.nodes,
                         edges: data.edges
                     };
+                    node_radius = 6;
                     create_graph();
                     circle3.style("background", "rgba(83, 118, 233, 0.1)")
                             .style("border-width", "3px");
@@ -496,12 +478,17 @@
         
         // ************************* Recieve diseases, symptoms from python *************
         function get_symptomslist(){
+            var column = document.createElement('TR');
+            ullist.appendChild(column);
+            column.innerHTML = "<td style='text-align:left; font-size: 10pt;'>Name</td>"+
+                                "<td style='text-align:left; font-size: 10pt;'>Frequency</td>";
             for(symp of py_symptoms){
-                var newElement = document.createElement('LI');
-                symptomlist.push(symp);
+                var newElement = document.createElement('TR');
+                symptomlist.push(symp); // store in list
                 ullist.appendChild(newElement);
                 newElement.setAttribute('rel', symp);
-                newElement.innerHTML= symp+"<button class='sympclosebtn'>X</button>";
+                newElement.innerHTML = "<td style='text-align:left; '>"+symp+"</td>";
+                newElement.innerHTML += "<td style='text-align:left; '>"+12+"</td>";
             }
 
         }
@@ -526,9 +513,6 @@
 
             // for disease list that the result from python.
             var number = 1;
-            var sorted_disease = {};
-            console.log(py_diseases);
-            
             var sortable = [];
 
             for (var candidate in py_diseases) {
@@ -538,9 +522,7 @@
             sortable.sort(function(a, b) {
                 return a[1] - b[1];
             });
-           
-            console.log(sortable)
-       
+                 
                 
           
             for(s in sortable){
@@ -650,17 +632,18 @@
                         nodes: data.nodes,
                         edges: data.edges
                     };
+                    node_radius = 6;
                     create_graph();
                     reset_cost_nodes_output();
                 }
             });
         }
         
-        // ************************* Closest nodes graph ********************************
-        function closest_nodes_graph(d){
+        // ************************* more_condition *************************************
+        function more_relevant(d){
             console.log("Closest nodes of :"+d.name);
             $.ajax({
-                url: "/closest_nodes",
+                url: "/more_relevant",
                 type: "post", //send it through get method
                 data:{'selectednode': d.name},
                
@@ -670,13 +653,54 @@
                     console.log("Error")
                 }
                 else{
-                    remove_graph();
-                    dataset = {
-                        nodes: data.nodes,
-                        edges: data.edges
-                    };
-                    create_graph();
-                    reset_cost_nodes_output();
+                    var closest_nodes = data.relevantnodes
+                    var sortable = [];
+
+                    for (var node in closest_nodes) {
+                        sortable.push([node, closest_nodes[node][0]]);
+                    }
+
+                    sortable.sort(function(a, b) {
+                        return a[1] - b[1];
+                    });
+                    var nodetable = ""
+                    for(s in sortable){
+                        var name = sortable[s][0]
+                        var distance = sortable[s][1]
+                        var tag = closest_nodes[sortable[s][0]][1]
+                        var color = 'white';
+                        console.log(tag);
+                        if(tag === 'DS' || tag === 'DT'){
+                            color = 'red';
+                        }
+                        else if(tag === 'ST'){
+                            color = 'yellow';
+                        }
+                        console.log(color);
+                        nodetable += "<tr>"
+                        nodetable += "<td>"+ name +"</td><td>" + distance +"</td><td><font color="+color+">"+tag+"</font></td><td><input type='checkbox' id='vehicle2' name='vehicle2' value='Car'></td>"
+                        nodetable += "</tr>"
+                    }
+                    // Define the div for the tooltip
+                    var div = d3.select("body").append("div")	
+                        .attr("class", "tooltip")
+                        .style("width", 400 +"px")
+						.style("height", 400 +"px");
+                        div.transition()		
+                        .style("opacity", 1);
+                  
+                    div.html("<span class='close' style='padding:3px;'  onclick='$(this).parent().remove();'>x</span>"+
+                            "<h4 align='left'>Relevant nodes</h4>"+
+                            "<table>"+
+                            "<tr>"+
+                            "<th class='text-center'>Name</th>"+"<th class='text-center'>Distance</th>"+"<th class='text-center'>Type</th>"+"<th class='text-center'>Check</th>"+
+                            "</tr>"+
+                            nodetable+
+                            "</table>"+
+                            "<button class='symptomsubmitbtn'>Submit</button>");	
+                    
+                    div.style("right", 20 + "px")		
+                        .style("top", 50 + "px")
                 }
             });
         }
@@ -715,7 +739,9 @@
 </div>
 <!-- End Main box -->
 <script>
+    
     // ************************* Symptom Add/Remove list ****************************
+    /*
     function add_symptom(d){
             var newElement = document.createElement('LI');
             // Add by right click on node
@@ -766,7 +792,7 @@
            
             }
         });
-             
+    */
     // ******************* Slider bar for adjust node by edge distance *************
     var slider = document.getElementById("sliderbar");
     var cost_output = document.getElementById("distance_value");
@@ -840,6 +866,8 @@
                         nodes: data.nodes,
                         edges: data.edges
                     };
+                    node_radius = data.node_r
+                    console.log(node_radius)
                     create_graph();
                     display_loader.innerHTML = "";
                 }
@@ -850,7 +878,11 @@
     
 {% endif %}
 </body>
-
-
+{% if centroid %}
+<script>
+    var centroid = JSON.parse('{{ centroid|tojson }}');
+        console.log('c = '+centroid);
+</script>
+{% endif %}
 </html>
 

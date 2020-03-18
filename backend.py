@@ -76,7 +76,7 @@ def disease_hop_activate(keywords):
                      
 
         current_hop += 1
-    
+  
     return dict(sorted(disease.items(), key=operator.itemgetter(1))), dict(sorted(candidate.items(), key=operator.itemgetter(1))), path, sum_path
 
 def get2node_path(source, target):
@@ -1128,7 +1128,11 @@ def get_closest_nodes(selectnode, existnodes):
     
     return closestnodes
 
+# symptoms frequencies
+def get_node_occur(keywords, centroid):
+    symptoms = dict()
+    for k in keywords:
+        symptoms[k] = [G.node[k]['occur'], float(format(get2node_path(k, centroid)[1], '.2f'))]
 
+    return symptoms
 
-
-    

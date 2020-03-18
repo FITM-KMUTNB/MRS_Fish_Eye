@@ -24,33 +24,45 @@ def index():
     
     if request.method == 'POST':
 
+        # check if keywords exist in graph
         input_keyword = request.form['symptoms'].split()
             
         symptoms = backend.check_keyword_exist(input_keyword)
-       
-        disease, centroid, path, sum_path = backend.disease_hop_activate(symptoms)
-        print("calculate centroid --> done")
-        n_disease = dict()
-        for k in list(disease.keys())[:10]:
-            n_disease[k] = [disease[k], sum_path[k]]
-        centroid = list(n_disease)[0]
 
-        
-        sp_path, allpath, pathcost = backend.centroid_shotest_path(n_disease, symptoms, centroid)
-        node,  edge= backend.create_graph_sp(n_disease, sp_path, centroid, pathcost)
-        print("create graph success --> done")
+        if symptoms:
+            # calculate centroid
+            disease, centroid, path, sum_path = backend.disease_hop_activate(symptoms)
+            print("calculate centroid --> done")
 
-        # session variable
-        session['allpath'] = allpath
-        session['pathcost'] = pathcost
-        session['node'] = node
-        session['edge'] = edge
-        session['nodes_radius'] = node
-        session['edges_radius'] = edge
-        session['centroid'] = centroid
-        session['center_node'] = centroid
-        session['symptoms_graph'] = False
-        return render_template('index.html', symptoms = symptoms, diseases = n_disease, node = session['node'], edge=session['edge'])
+            # first 10 candidate
+            n_disease = dict()
+            for k in list(disease.keys())[:10]:
+                n_disease[k] = [disease[k], sum_path[k]]
+            centroid = list(n_disease)[0]
+
+            # generate d3 graph
+            sp_path, allpath, pathcost = backend.centroid_shotest_path(n_disease, symptoms, centroid)
+            node,  edge= backend.create_graph_sp(n_disease, sp_path, centroid, pathcost)
+            print("create graph --> done")
+
+            # get symptoms frequency
+            symptoms = backend.get_node_occur(symptoms, centroid)
+            
+            # session variable
+            session['allpath'] = allpath
+            session['pathcost'] = pathcost
+            session['node'] = node
+            session['edge'] = edge
+            session['nodes_radius'] = node
+            session['edges_radius'] = edge
+            session['nodes_current'] = node
+            session['edges_current'] = edge
+            session['centroid'] = centroid
+            session['center_node'] = centroid
+            session['symptoms_graph'] = False
+            return render_template('index.html', symptoms = symptoms, diseases = n_disease, node = session['node'], edge=session['edge'])
+        else:
+            return render_template('index.html', invalid_keywords = True)
     else:
         session.clear()
         return render_template('index.html')
@@ -79,6 +91,9 @@ def node_symptoms():
     session['symp_edges'] = graph_edge
     session['symptoms_graph'] = True
 
+    session['nodes_current'] = graph_node
+    session['edges_current'] = graph_edge
+
     return jsonify({'nodes':graph_node, 'edges':graph_edge})
 
 # send first centroid graph --> click on centroid btn
@@ -92,7 +107,6 @@ def centroid_graph():
     
     return jsonify({'nodes':session['node'], 'edges':session['edge']})
 
-
 # adjust slider to display nodes within distance.
 @app.route('/nodes_radius', methods=['GET','POST'])
 def nodes_radius():
@@ -105,10 +119,14 @@ def nodes_radius():
             nodes_radius, edges_radius, node_r = backend.nodes_in_distance(session['center_node'], session['node'], session['nodes_radius'], session['edges_radius'], slider_cost)
             session['nodes_radius'] = nodes_radius
             session['edges_radius'] = edges_radius
+            session['nodes_current'] = nodes_radius
+            session['edges_current'] = edges_radius
             session['node_r'] = node_r
             return jsonify({'nodes':session['nodes_radius'], 'edges':session['edges_radius'], 'node_r':session['node_r']})
         elif expression == 'minus':
             de_nodes_radius, de_edges_radius, node_r = backend.nodes_out_distance(session['center_node'], session['node'], session['nodes_radius'],  session['edges_radius'], slider_cost, session['node_r'])
+            session['nodes_current'] = de_nodes_radius
+            session['edges_current'] = de_edges_radius
             session['node_r'] = node_r
             return jsonify({'nodes':de_nodes_radius, 'edges':de_edges_radius, 'node_r':session['node_r']})
 
@@ -118,10 +136,14 @@ def nodes_radius():
             nodes_radius, edges_radius, node_r = backend.symptoms_in_distance(session['center_node'], session['symp_nodes'], session['nodes_radius'], session['edges_radius'], slider_cost)
             session['nodes_radius'] = nodes_radius
             session['edges_radius'] = edges_radius
+            session['nodes_current'] = nodes_radius
+            session['edges_current'] = edges_radius
             session['node_r'] = node_r
             return jsonify({'nodes':session['nodes_radius'], 'edges':session['edges_radius'], 'node_r':session['node_r']})
         elif expression == 'minus':
             de_nodes_radius, de_edges_radius, node_r = backend.symptoms_out_distance(session['center_node'], session['symp_nodes'], session['nodes_radius'], session['edges_radius'], slider_cost, session['node_r'])
+            session['nodes_current'] = de_nodes_radius
+            session['edges_current'] = de_edges_radius
             session['node_r'] = node_r
             return jsonify({'nodes':de_nodes_radius, 'edges':de_edges_radius, 'node_r':session['node_r']})
     
@@ -136,6 +158,9 @@ def direct_connected_nodes():
     session['symptoms_graph'] = False
     session['nodes_radius'] = nodes_radius
     session['edges_radius'] =  edges_radius
+    session['nodes_current'] = nodes_radius
+    session['edges_current'] = edges_radius
+    session['center_node'] = selectednode
     return jsonify({'nodes':nodes_radius, 'edges':edges_radius})
 
 # get closest to select node for find more condition.    
@@ -143,8 +168,20 @@ def direct_connected_nodes():
 def more_relevant():
     selectednode = request.form['selectednode']
     relevantnodes = backend.get_closest_nodes(selectednode, session['nodes_radius'])
-
+    print("more relevant nodes --> done")
     return jsonify({'relevantnodes':relevantnodes})
+
+# send first centroid graph --> click on centroid btn
+@app.route('/current_graph', methods=['GET','POST'])
+def current_graph():
+    
+    session['symptoms_graph'] = False
+    session['nodes_radius'] = session['nodes_current']
+    session['edges_radius'] = session['edges_current']
+    session['center_node'] = session['centroid']
+    
+    return jsonify({'nodes':session['nodes_current'], 'edges':session['edges_current']})
+
 if __name__ == "__main__":
     app.run(debug=True)
     

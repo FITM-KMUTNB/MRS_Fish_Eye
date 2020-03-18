@@ -14,13 +14,13 @@
     
     <!-- Search Box -->
     <div id="head-block">
-    <div id="logo-block"><h2>TMRS</h2></div>
+    <div id="logo-block" style= 'cursor: pointer' onclick="window.location='';"><h2>TMRS</h2></div>
     <div class="container">
     <div class="row">
         <form action ="/" method="POST">
         <div id="custom-search-input">
         <div class="input-group col-md-12">
-            <input type="text" name="symptoms" class="search-query form-control" placeholder="Search" required/>
+            <input type="text" name="symptoms" class="search-query form-control" placeholder="Search" id="mySearch" required/>
             <span class="input-group-btn">
             <button class="btn btn-danger" type="submit">
             <span class=" glyphicon glyphicon-search"></span>
@@ -481,14 +481,17 @@
             var column = document.createElement('TR');
             ullist.appendChild(column);
             column.innerHTML = "<td style='text-align:left; font-size: 10pt;'>Name</td>"+
-                                "<td style='text-align:left; font-size: 10pt;'>Frequency</td>";
-            for(symp of py_symptoms){
+                                "<td style='text-align:center; font-size: 10pt;'>Frequency</td>"+
+                                "<td style='text-align:center; font-size: 10pt;'>Distance</td>";
+            
+            for(var symp in py_symptoms){
                 var newElement = document.createElement('TR');
                 symptomlist.push(symp); // store in list
                 ullist.appendChild(newElement);
                 newElement.setAttribute('rel', symp);
                 newElement.innerHTML = "<td style='text-align:left; '>"+symp+"</td>";
-                newElement.innerHTML += "<td style='text-align:left; '>"+12+"</td>";
+                newElement.innerHTML += "<td style='text-align:center;'>"+py_symptoms[symp][0]+"</td>";
+                newElement.innerHTML += "<td style='text-align:center;'>"+py_symptoms[symp][1]+"</td>";
             }
 
         }
@@ -500,6 +503,7 @@
             boxhead.innerHTML = "<th style='padding: 10px;' colspan='5'>"+
                                 "<p style='border:1px; border-style:solid; border-color:rgb(15, 153, 217); padding: 4px; color: #e8ebee;'>"+
                                 "Centroid Calculation"+
+                                "<button class='currentbtn' onclick='current_graph()'>Current Graph</button>"+
                                 "<button class='centroidbtn' onclick='centroid_graph()'>Centroid</button>"+
                                 "</p>"+
                                 "</th>";
@@ -669,16 +673,15 @@
                         var distance = sortable[s][1]
                         var tag = closest_nodes[sortable[s][0]][1]
                         var color = 'white';
-                        console.log(tag);
                         if(tag === 'DS' || tag === 'DT'){
                             color = 'red';
                         }
                         else if(tag === 'ST'){
                             color = 'yellow';
                         }
-                        console.log(color);
                         nodetable += "<tr>"
-                        nodetable += "<td>"+ name +"</td><td>" + distance +"</td><td><font color="+color+">"+tag+"</font></td><td><input type='checkbox' id='vehicle2' name='vehicle2' value='Car'></td>"
+                        nodetable += "<td>"+ name +"</td><td>" + distance +"</td><td><font color="+color+">"+tag+"</font></td>"+
+                                    "<td><input type='checkbox' class='checksymptoms[]' value='"+name+"'></td>"
                         nodetable += "</tr>"
                     }
                     // Define the div for the tooltip
@@ -690,20 +693,70 @@
                         .style("opacity", 1);
                   
                     div.html("<span class='close' style='padding:3px;'  onclick='$(this).parent().remove();'>x</span>"+
-                            "<h4 align='left'>Relevant nodes</h4>"+
+                            "<h4 align='left'>Relevant nodes ["+d.name+"]</h4>"+
                             "<table>"+
                             "<tr>"+
                             "<th class='text-center'>Name</th>"+"<th class='text-center'>Distance</th>"+"<th class='text-center'>Type</th>"+"<th class='text-center'>Check</th>"+
                             "</tr>"+
                             nodetable+
                             "</table>"+
-                            "<button class='symptomsubmitbtn'>Submit</button>");	
+                            "<button class='symptomsubmitbtn' onclick='add_symptoms(this,\""+d.name+"\")'>Submit</button>&nbsp;<button class='symptomcancelbtn' onclick='$(this).parent().remove();'>Cancel</button>");	
                     
                     div.style("right", 20 + "px")		
                         .style("top", 50 + "px")
                 }
             });
         }
+        
+        // ************************* add more symptoms **********************************
+        function add_symptoms(elem, clicknode){
+
+            var inputElements = document.getElementsByClassName('checksymptoms[]');
+            if(!symptomlist.includes(clicknode)){
+                symptomlist.push(clicknode)
+                document.getElementById("mySearch").value += clicknode
+                document.getElementById("mySearch").value += " "
+            }
+            for(var i=0; inputElements[i]; ++i){
+                if(inputElements[i].checked){
+                    symptomlist.push(inputElements[i].value )
+                    document.getElementById("mySearch").value += inputElements[i].value 
+                    document.getElementById("mySearch").value += " "
+                }
+            }       
+            $(elem).parent().remove();
+        }
+       
+        // ************************* current graph **************************************
+        function current_graph(){
+
+            $.ajax({
+                url: "/current_graph"
+               
+            })
+            .done(function(data){
+                if(data.error){
+                    console.log("Error")
+                }
+                else{
+                    remove_graph()
+                    dataset = {
+                        nodes: data.nodes,
+                        edges: data.edges
+                    };
+                    create_graph();
+                    circle3.style("background", "rgba(83, 118, 233, 0.1)")
+                            .style("border-width", "3px");
+                    circle2.style("background", "rgba(83, 118, 233, 0.2)")
+                            .style("border-width", "3px");
+                    circle1.style("background", "rgb(161, 157, 157,.2)")
+                            .style("border-width", "5px");
+                }
+            });
+        }
+
+               
+       
         // ************************* initiated graph ************************************ 
         get_symptomslist();
         get_diseaseslist();
@@ -874,15 +927,28 @@
         });
 
     }
+
+    function searchbar_value() {
+        var searchval = "";
+        for(var key in py_symptoms){
+            searchval += key
+            searchval += " "
+        }
+        document.getElementById("mySearch").value = searchval;
+    }
+    searchbar_value()
 </script>
     
 {% endif %}
 </body>
-{% if centroid %}
+
+{% if invalid_keywords %}
 <script>
-    var centroid = JSON.parse('{{ centroid|tojson }}');
-        console.log('c = '+centroid);
+    
+    alert("Invalid keywords !");
+    
 </script>
 {% endif %}
+
 </html>
 

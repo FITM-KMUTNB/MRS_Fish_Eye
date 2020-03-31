@@ -3,8 +3,8 @@ import operator
 import random
 import math 
 
-G = nx.read_gpickle("graph/201th.gpickle")
-#G = nx.read_gpickle("graph/221disease.gpickle")
+#G = nx.read_gpickle("graph/201th.gpickle")
+G = nx.read_gpickle("graph/221disease.gpickle")
 print(nx.info(G))
 
 def check_keyword_exist(keywords):
@@ -1136,5 +1136,18 @@ def get_node_occur(keywords, centroid):
 
     return symptoms
 
-
-
+# get graph info
+def graph_info():
+    graph_info = dict()
+    graph_info['nodes'] = len(G)
+    graph_info['edges'] = G.number_of_edges()
+    nodes_type = {'Diseases':0, 'Symptoms':0, 'Normal':0}
+    for n in G.nodes:
+        if G.node[n]['tag'] == 'DS' or G.node[n]['tag'] == 'DT':
+            nodes_type['Diseases'] += 1
+        elif G.node[n]['tag'] == 'ST':
+            nodes_type['Symptoms'] += 1
+        else:
+            nodes_type['Normal'] += 1
+    
+    return graph_info, nodes_type

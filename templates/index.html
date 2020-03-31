@@ -205,7 +205,7 @@
                         .style("stroke", function(d){
                             return d.color;
                         })
-                        .style("stroke-opacity", .5)
+                        .style("stroke-opacity", 0.5)
                         .style("stroke-width", 0.5)
                         //.style("filter", "drop-shadow(0px 0px 2px rgb(15, 153, 217))")
 
@@ -939,6 +939,246 @@
     searchbar_value()
 </script>
     
+<!----------------- homepage ------------------------>
+{% else %}
+    <div style="float:left;">
+        <script src="https://d3js.org/d3.v3.min.js"></script>
+        <script>
+            var w = 750;
+            var h = 550;
+            var dataset = {nodes:[], edges:[]};
+            var amount = 200;
+            var color = [
+                        'rgba(247, 32, 32, 1)',
+                        'rgba(172, 247, 32)',
+                        'rgba(2, 69, 255)'
+                        ];
+            d3.range(amount).forEach(function(el) {
+                var rgba = color[Math.floor(Math.random() * color.length)];
+                dataset.nodes.push({'name':el, 'rgba':rgba}); 
+                var s = Math.floor(Math.random() *amount);
+                var t = Math.floor(Math.random() *amount);
+                dataset.edges.push({'source':s, 'target':t}); 
+            });
+            for(source=0; source < dataset.nodes.length; source++){
+                if(source == 0){
+                    for(target=source+1; target < dataset.nodes.length; target++){
+                        dataset.edges.push({'source':source, 'target':target});
+                    }
+                }
+                else{
+                    for(round=0; round < 2; round++){
+                        var target = Math.floor(Math.random() *amount);
+                        dataset.edges.push({'source':source, 'target':target}); 
+                    }
+                }
+
+            }
+
+            var force = d3.layout.force()
+                        .nodes(dataset.nodes)
+                        .links(dataset.edges)
+                        .size([w, h])
+                        .linkDistance([150])
+                        .charge([-150])
+                        .start();
+
+            var colors = d3.scale.category10();
+            var svg = d3.select("body")
+                            .append("svg")
+                            .attr("width", w)
+                            .attr("height", h);
+            var edges = svg.selectAll("line")
+                            .data(dataset.edges)
+                            .enter()
+                            .append("line")
+                            .style("stroke", "#3399ff")
+                            .style("stroke-width", 0.5)
+                            .style("stroke-opacity", .5);
+            var nodes = svg.selectAll("circle")
+                            .data(dataset.nodes)
+                            .enter()
+                            .append("circle")
+                            .attr("r", 6)
+                            .style("fill", "white")
+                            .style("stroke", function (d) {
+                               
+                                return d.rgba;
+                                
+                            })
+                            .style("stroke-opacity", .5)
+                            .style("stroke-width", 5)
+                            .call(force.drag);
+               
+            
+
+            force.on("tick", function(){
+                edges.attr("x1", function(d){ return d.source.x; })
+                    .attr("y1", function(d){ return d.source.y; })
+                    .attr("x2", function(d){ return d.target.x; })
+                    .attr("y2", function(d){ return d.target.y; });
+                nodes.attr("cx", function(d){ return d.x; })
+                    .attr("cy", function(d){ return d.y; });
+
+                
+            });
+
+           
+        </script>
+
+        
+    </div>
+    <div style="float:right; padding: 80px;">
+        <!-- Graph info box -->
+        <div style="background-color: rgba(0, 140, 255, 0.308); padding: 5px; width: 400px;  border-radius: 15px;">
+            <div style="color:rgb(255, 255, 255); margin-left: 10px;">
+                <h3 align="left"><b>Graph info</b></h3>
+                <hr>
+                <h4 align="left">Graph name : </h4>
+                <h4 align="left">Number of nodes : <p id="nodes_number" style="display:inline;"></p></h4>
+                <h4 align="left">Number of edges : <p id="edges_number" style="display:inline;"></p></h4>
+
+                <h3 align="left"><b>Node type</b></h3>
+                <hr>
+                <h4 align="left">Diseases : <p id="diseases_number" style="display:inline;"></p></h4>
+                <h4 align="left">Symptoms : <p id="symptoms_number" style="display:inline;"></p></h4>
+                <h4 align="left">Normal : <p id="normal_number" style="display:inline;"></p></h4>
+                <br>
+            </div>
+            
+        </div>
+        <br>
+        <!-- Graph btn -->
+        <button class="creategraphbtn" id="display-creategraphbox">Create Graph</button>
+        <button class="creategraphbtn">Select Graph</button>
+        <button class="creategraphbtn">Add Document</button>
+        
+        <!-- The Modal -->
+        <div id="creategraphbox" class="creategraphbox">
+            <!-- Modal content -->
+            <div class="creategraphbox-content">
+                <span class="close">&times;</span>
+                <h3 align="left"><b>Create Graph</b></h3>
+                <hr>
+                <h4 align="left"><b>Graph name</b></h4>
+                <input type="text" id="inputgraphname" style="float: left;"><br><br>
+                <hr>
+                <h4 align="left"><b>Document </b>(.Pdf)</h4>
+                
+                <label style="display: inline;">Directory : &nbsp;</label><input type="file" id="inputdocuments" style="display: inline;" webkitdirectory directory multiple/>
+                <br>
+                <label>or</label>
+                <br>
+                <label style="display: inline;">File : &nbsp;</label><input type="file" id="inputdocuments"  style="display: inline;" accept="application/pdf"/>
+                
+                <br>
+                <hr>
+                <h4 align="left"><b>Node tagging </b></h4>
+                <p style="float: left; "><label>Number of tag : </label> &nbsp;</p>
+                <!--<select id="gettagvalue" class="numberoftag" style="float: left;"  onfocus='this.size=5;' onblur='this.size=0;' 
+                onchange='this.size=0; this.blur(); gettagnumber();'>-->
+                <select id="gettagvalue" class="numberoftag" style="float: left;" 
+                onchange='gettagnumber();'>
+                </select><p style="float: left;">&nbsp; * |NN for None tag</p>
+                <br><br>
+                <div id="inputnodetag"></div>
+                <br>
+                <hr>
+                <div style="bottom:20px; float: center;">
+                <button class="submitcreategraph" onclick="submit_creategraph()">Submit</button>
+                <button class='canclecreategraph' onclick='cancel_creategraph()'>Cancel</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function numberWithCommas(x) {
+                return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+                    
+        function graph_info(){
+            var nodes_number = '{{graph_info.nodes }}';
+            var edges_number = '{{graph_info.edges }}';
+            var diseases_number = '{{nodes_type.Diseases }}';
+            var symptoms_number = '{{nodes_type.Symptoms }}';
+            var normal_number = '{{ nodes_type.Normal }}'
+            document.getElementById("nodes_number").innerHTML = numberWithCommas(nodes_number);
+            document.getElementById("edges_number").innerHTML = numberWithCommas(edges_number);
+            document.getElementById("diseases_number").innerHTML = numberWithCommas(diseases_number);
+            document.getElementById("symptoms_number").innerHTML = numberWithCommas(symptoms_number);
+            document.getElementById("normal_number").innerHTML = numberWithCommas(normal_number);
+        }
+        graph_info()
+
+        //**************************** Create graph box function **************************************
+        // Get the modal
+        var creategraph_modal = document.getElementById("creategraphbox");
+
+        // Get the button that opens the modal
+        var creategraph_btn = document.getElementById("display-creategraphbox");
+
+        // Get the <span> element that closes the modal
+        var creategraph_span = document.getElementsByClassName("close")[0];
+        
+        // When the user clicks the button, open the modal 
+        creategraph_btn.onclick = function() {
+            creategraph_modal.style.display = "block";
+        }
+        // When the user clicks on <span> (x), close the modal
+        creategraph_span.onclick = function() {
+            creategraph_modal.style.display = "none";
+        }
+
+        // When the user clicks anywhere outside of the modal, close it
+        window.onclick = function(event) {
+            if (event.target == creategraph_modal) {
+                creategraph_modal.style.display = "none";
+            }
+        }
+
+        // number of tag
+        $(function(){
+            var $select = $(".numberoftag");
+            for (i=0;i<=100;i++){
+                $select.append($('<option></option>').val(i).html(i))
+            }
+        });
+        
+        function gettagnumber(){
+            var e = document.getElementById("gettagvalue");
+            var tagnumber = e.options[e.selectedIndex].value;
+            var inputnodetag = document.getElementById("inputnodetag");
+            inputnodetag.innerHTML = ""
+            for(number=0; number < tagnumber; number++){
+                inputnodetag.innerHTML += 
+                "<label> Tag : &nbsp;</label>"+
+                "<input type='text' class='tag' maxlength='5' size='5' style='display:inline-block;'/>"+
+                "<label>&nbsp; Words list (txt.) : &nbsp;</label>"+
+                "<input type='file' class='wordlist' style='display:inline-block;'/><br>"
+            }
+            
+        }
+
+        function cancel_creategraph(){
+            creategraph_modal.style.display = "none";
+        }
+       
+        function submit_creategraph(){
+            var inputgraphname = document.getElementById("inputgraphname");
+            console.log(inputgraphname.value);
+            var inputdocuments = document.getElementById("inputdocuments");
+            console.log(inputdocuments.value);
+            var alltag = document.getElementsByClassName("tag");
+            var allwordlist = document.getElementsByClassName("wordlist");
+            var tag_dictionary = {};
+            for(index=0; index < alltag.length; index++){
+                tag_dictionary[alltag[index].value] = allwordlist[index].value;
+            }
+            console.log(tag_dictionary);
+        }
+    </script>
 {% endif %}
 </body>
 

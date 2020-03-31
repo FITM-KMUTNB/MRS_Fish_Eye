@@ -62,10 +62,12 @@ def index():
             session['symptoms_graph'] = False
             return render_template('index.html', symptoms = symptoms, diseases = n_disease, node = session['node'], edge=session['edge'])
         else:
+            
             return render_template('index.html', invalid_keywords = True)
     else:
         session.clear()
-        return render_template('index.html')
+        graph_info, nodes_type = backend.graph_info()
+        return render_template('index.html', graph_info = graph_info, nodes_type = nodes_type)
 
 # send disease pdf
 @app.route('/send_document', methods=['GET','POST'])

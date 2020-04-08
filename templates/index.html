@@ -940,7 +940,9 @@
 </script>
     
 <!----------------- homepage ------------------------>
-{% else %}
+{% elif graph_info %}
+    <!-- ******************************** Graph running *****************************-->
+    
     <div style="float:left;">
         <script src="https://d3js.org/d3.v3.min.js"></script>
         <script>
@@ -1034,15 +1036,13 @@
             <div style="color:rgb(255, 255, 255); margin-left: 10px;">
                 <h3 align="left"><b>Graph info</b></h3>
                 <hr>
-                <h4 align="left">Graph name : </h4>
+                <h4 align="left">Graph name : {{graph_name}}</h4>
                 <h4 align="left">Number of nodes : <p id="nodes_number" style="display:inline;"></p></h4>
                 <h4 align="left">Number of edges : <p id="edges_number" style="display:inline;"></p></h4>
 
                 <h3 align="left"><b>Node type</b></h3>
                 <hr>
-                <h4 align="left">Diseases : <p id="diseases_number" style="display:inline;"></p></h4>
-                <h4 align="left">Symptoms : <p id="symptoms_number" style="display:inline;"></p></h4>
-                <h4 align="left">Normal : <p id="normal_number" style="display:inline;"></p></h4>
+                <div id='nodetype'></div>
                 <br>
             </div>
             
@@ -1050,43 +1050,77 @@
         <br>
         <!-- Graph btn -->
         <button class="creategraphbtn" id="display-creategraphbox">Create Graph</button>
-        <button class="creategraphbtn">Select Graph</button>
+        <button class="creategraphbtn" id="display-selectgraphbox">Select Graph</button>
         <button class="creategraphbtn">Add Document</button>
+        <button class="creategraphbtn" onclick="clear_graph()">Clear</button>
         
         <!-- The Modal -->
-        <div id="creategraphbox" class="creategraphbox">
-            <!-- Modal content -->
-            <div class="creategraphbox-content">
+    <div id="creategraphbox" class="creategraphbox">
+        <!-- Modal content -->
+        <div class="creategraphbox-content">
+            <form id="upload-graph" method="post" enctype="multipart/form-data">
                 <span class="close">&times;</span>
                 <h3 align="left"><b>Create Graph</b></h3>
                 <hr>
-                <h4 align="left"><b>Graph name</b></h4>
-                <input type="text" id="inputgraphname" style="float: left;"><br><br>
+                <h4 align="left"><b>Graph name : &nbsp;</b></h4>
+                <input type="text" name="inputgraphname" style="float: left;"><br><br>
                 <hr>
                 <h4 align="left"><b>Document </b>(.Pdf)</h4>
+                <!--
+                <input type="radio" id="directory" name="documentradio" value="directory">&nbsp;Directory
+                &nbsp;&nbsp;&nbsp;&nbsp;
+                <input type="radio" id="file" name="documentradio" value="file">&nbsp;File
+                &nbsp;&nbsp;&nbsp;&nbsp;
                 
-                <label style="display: inline;">Directory : &nbsp;</label><input type="file" id="inputdocuments" style="display: inline;" webkitdirectory directory multiple/>
-                <br>
-                <label>or</label>
-                <br>
-                <label style="display: inline;">File : &nbsp;</label><input type="file" id="inputdocuments"  style="display: inline;" accept="application/pdf"/>
-                
-                <br>
+                <button onclick="submit_inputdoctype()">Submit</button>-->
+                <input type='file' name='inputdocuments' style='display: inline;' webkitdirectory directory multiple/>
+                <br><br>
+                <div id="browsefile">
+                </div>
                 <hr>
                 <h4 align="left"><b>Node tagging </b></h4>
                 <p style="float: left; "><label>Number of tag : </label> &nbsp;</p>
                 <!--<select id="gettagvalue" class="numberoftag" style="float: left;"  onfocus='this.size=5;' onblur='this.size=0;' 
                 onchange='this.size=0; this.blur(); gettagnumber();'>-->
-                <select id="gettagvalue" class="numberoftag" style="float: left;" 
-                onchange='gettagnumber();'>
+                <!--<select id="gettagvalue" class="numberoftag" style="float: left;" 
+                onchange='gettagnumber();'>-->
                 </select><p style="float: left;">&nbsp; * |NN for None tag</p>
                 <br><br>
-                <div id="inputnodetag"></div>
+                <!--<div id="inputnodetag"></div>-->
+
+                <label> Tag : &nbsp;</label>
+                <input name='tag1' type='text' class='tag' maxlength='5' size='5' style='display:inline-block;'/>
+                <label>&nbsp; Words list (txt.) : &nbsp;</label>"
+                <input name='tag_file1' type='file' class='wordlist' style='display:inline-block;' accept='.txt'/><br>
+
+                <label> Tag : &nbsp;</label>
+                <input name='tag2' type='text' class='tag' maxlength='5' size='5' style='display:inline-block;'/>
+                <label>&nbsp; Words list (txt.) : &nbsp;</label>"
+                <input name='tag_file2' type='file' class='wordlist' style='display:inline-block;' accept='.txt'/><br>
+
                 <br>
                 <hr>
                 <div style="bottom:20px; float: center;">
-                <button class="submitcreategraph" onclick="submit_creategraph()">Submit</button>
-                <button class='canclecreategraph' onclick='cancel_creategraph()'>Cancel</button>
+                <button class="submitcreategraph" id="submit-creategraph-btn" type="button">Submit</button>
+                <button class='canclecreategraph' onclick='cancel_creategraph()' type="button">Cancel</button>
+            </form>
+            </div>
+        </div>
+       
+        </div>
+
+        <!-- The Modal -->
+        <div id="selectgraphbox" class="selectgraphbox">
+            <!-- Modal content -->
+            <div class="selectgraphbox-content">
+                <span class="closegraphlist">&times;</span>
+                <h3 align="left"><b>Select Graph Database</b></h3>
+                <hr>
+                <div id= "graphlistul" align="left"></div>
+                <br>
+                <div style="bottom:20px; float: center;">
+                <button class="submitcreategraph" onclick="submit_selectgraph()">Submit</button>
+                <button class='canclecreategraph' onclick='cancel_selectgraph()'>Cancel</button>
                 </div>
             </div>
         </div>
@@ -1101,18 +1135,139 @@
         function graph_info(){
             var nodes_number = '{{graph_info.nodes }}';
             var edges_number = '{{graph_info.edges }}';
-            var diseases_number = '{{nodes_type.Diseases }}';
+            var node_type = JSON.parse('{{ nodes_type|tojson }}');
             var symptoms_number = '{{nodes_type.Symptoms }}';
             var normal_number = '{{ nodes_type.Normal }}'
+            var nodetype_div = document.getElementById("nodetype")
+            nodetype_div.innerHTML = ""
+            for(var tag in node_type){
+                nodetype_div.innerHTML += "<h4 align='left'>"+tag+" : "+numberWithCommas(node_type[tag])+"</h4>"
+            }
             document.getElementById("nodes_number").innerHTML = numberWithCommas(nodes_number);
             document.getElementById("edges_number").innerHTML = numberWithCommas(edges_number);
-            document.getElementById("diseases_number").innerHTML = numberWithCommas(diseases_number);
-            document.getElementById("symptoms_number").innerHTML = numberWithCommas(symptoms_number);
-            document.getElementById("normal_number").innerHTML = numberWithCommas(normal_number);
         }
         graph_info()
+        function clear_graph(){
+            $.ajax({
+                url: "/clear_graph"
+               
+            })
+            .done(function(data){
+                if(data.error){
+                    console.log("Error")
+                }
+                else{
+                    window.location.href = '/';
+                }
+            });
+        }
+    </script>
 
-        //**************************** Create graph box function **************************************
+<!-- **************************** Graph Empty ********************************* -->
+{% else %}
+<div style="float:left; color:cornflowerblue; margin-top: 200px; margin-left: 250px;">
+    <h2><b>Graph Empty</b></h2>    
+</div>
+<div style="float:right; padding: 80px;">
+    <!-- Graph info box -->
+    <div style="background-color: rgba(0, 140, 255, 0.308); padding: 5px; width: 400px;  border-radius: 15px;">
+        <div style="color:rgb(255, 255, 255); margin-left: 10px;">
+            <div style="color:cornflowerblue; padding: 150px;">
+            <h4><b>Empty</b></h4>
+            </div>
+        </div>
+        
+    </div>
+    <br>
+    <!-- Graph btn -->
+    <button class="creategraphbtn" id="display-creategraphbox">Create Graph</button>
+    <button class="creategraphbtn" id="display-selectgraphbox">Select Graph</button>
+    
+    <!-- The Modal -->
+    <div id="creategraphbox" class="creategraphbox">
+        <!-- Modal content -->
+        <div class="creategraphbox-content">
+            <form id="upload-graph" method="post" enctype="multipart/form-data">
+                <span class="close">&times;</span>
+                <h3 align="left"><b>Create Graph</b></h3>
+                <hr>
+                <h4 align="left"><b>Graph name : &nbsp;</b></h4>
+                <input type="text" name="inputgraphname" style="float: left;"><br><br>
+                <hr>
+                <h4 align="left"><b>Document </b>(.Pdf)</h4>
+                <!--
+                <input type="radio" id="directory" name="documentradio" value="directory">&nbsp;Directory
+                &nbsp;&nbsp;&nbsp;&nbsp;
+                <input type="radio" id="file" name="documentradio" value="file">&nbsp;File
+                &nbsp;&nbsp;&nbsp;&nbsp;
+                
+                <button onclick="submit_inputdoctype()">Submit</button>-->
+                <input type='file' name='inputdocuments' style='display: inline;' webkitdirectory directory multiple/>
+                <br><br>
+                <div id="browsefile">
+                </div>
+                <hr>
+                <h4 align="left"><b>Node tagging </b></h4>
+                <p style="float: left; "><label>Number of tag : </label> &nbsp;</p>
+                <!--<select id="gettagvalue" class="numberoftag" style="float: left;"  onfocus='this.size=5;' onblur='this.size=0;' 
+                onchange='this.size=0; this.blur(); gettagnumber();'>-->
+                <!--<select id="gettagvalue" class="numberoftag" style="float: left;" 
+                onchange='gettagnumber();'>-->
+                </select><p style="float: left;">&nbsp; * |NN for None tag</p>
+                <br><br>
+                <!--<div id="inputnodetag"></div>-->
+
+                <label> Tag : &nbsp;</label>
+                <input name='tag1' type='text' class='tag' maxlength='5' size='5' style='display:inline-block;'/>
+                <label>&nbsp; Words list (txt.) : &nbsp;</label>"
+                <input name='tag_file1' type='file' class='wordlist' style='display:inline-block;' accept='.txt'/><br>
+
+                <label> Tag : &nbsp;</label>
+                <input name='tag2' type='text' class='tag' maxlength='5' size='5' style='display:inline-block;'/>
+                <label>&nbsp; Words list (txt.) : &nbsp;</label>"
+                <input name='tag_file2' type='file' class='wordlist' style='display:inline-block;' accept='.txt'/><br>
+
+                <br>
+                <hr>
+                <div style="bottom:20px; float: center;">
+                <button class="submitcreategraph" id="submit-creategraph-btn" type="button">Submit</button>
+                <button class='canclecreategraph' onclick='cancel_creategraph()' type="button">Cancel</button>
+            </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- The Modal -->
+    <div id="selectgraphbox" class="selectgraphbox">
+        <!-- Modal content -->
+        <div class="selectgraphbox-content">
+            <span class="closegraphlist">&times;</span>
+            <h3 align="left"><b>Select Graph Database</b></h3>
+            <hr>
+            <div id= "graphlistul" align="left"></div>
+            <br>
+            <div style="bottom:20px; float: center;">
+            <button class="submitcreategraph" onclick="submit_selectgraph()">Submit</button>
+            <button class='canclecreategraph' onclick='cancel_selectgraph()'>Cancel</button>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endif %}
+</body>
+
+{% if invalid_keywords %}
+<script>
+    
+    alert("Invalid keywords or Graph is empty !");
+    
+</script>
+{% endif %}
+
+{% if graph_file %}
+<script>
+    //**************************** Create graph box function **************************************
         // Get the modal
         var creategraph_modal = document.getElementById("creategraphbox");
 
@@ -1146,6 +1301,7 @@
             }
         });
         
+        // get how many of tag and display input box
         function gettagnumber(){
             var e = document.getElementById("gettagvalue");
             var tagnumber = e.options[e.selectedIndex].value;
@@ -1156,39 +1312,126 @@
                 "<label> Tag : &nbsp;</label>"+
                 "<input type='text' class='tag' maxlength='5' size='5' style='display:inline-block;'/>"+
                 "<label>&nbsp; Words list (txt.) : &nbsp;</label>"+
-                "<input type='file' class='wordlist' style='display:inline-block;'/><br>"
+                "<input type='file' class='wordlist' style='display:inline-block;' accept='.txt'/><br>"
             }
             
         }
+        
+        // get input type(singlefile or directory) and display browse file button
+        function submit_inputdoctype(){
+            var inputdoc_type = document.getElementsByName('documentradio');
+            var browsedoc_div = document.getElementById('browsefile');
+            for(i = 0; i < inputdoc_type.length; i++){ 
 
+                if(inputdoc_type[i].checked){
+                    
+                    if(inputdoc_type[i].value == 'directory'){
+                        
+                        browsedoc_div.innerHTML = "<input type='file' name='inputdocuments' style='display: inline;' webkitdirectory directory multiple/>"
+                
+                    }
+                    else if(inputdoc_type[i].value == 'file'){
+                        browsedoc_div.innerHTML = "<input type='file' name='inputdocuments'  style='display: inline;' accept='application/pdf'/>"
+                    }
+                    
+                }
+                
+            } 
+
+        }
+        
         function cancel_creategraph(){
             creategraph_modal.style.display = "none";
         }
-       
-        function submit_creategraph(){
-            var inputgraphname = document.getElementById("inputgraphname");
-            console.log(inputgraphname.value);
-            var inputdocuments = document.getElementById("inputdocuments");
-            console.log(inputdocuments.value);
-            var alltag = document.getElementsByClassName("tag");
-            var allwordlist = document.getElementsByClassName("wordlist");
-            var tag_dictionary = {};
-            for(index=0; index < alltag.length; index++){
-                tag_dictionary[alltag[index].value] = allwordlist[index].value;
-            }
-            console.log(tag_dictionary);
-        }
-    </script>
-{% endif %}
-</body>
+        
+        $(function() {
+                $('#submit-creategraph-btn').click(function() {
+                    //var form_data = new FormData();
+                    //form_data.append('doc', document.getElementById('inputfile').files)
+                    var form_data = new FormData($('#upload-graph')[0]);
+                    //console.log(document.getElementById('inputfile').files)
+                    $.ajax({
+                        type: 'POST',
+                        url: '/create_graph',
+                        data: form_data,
+                        contentType: false,
+                        cache: false,
+                        processData: false,
+                        success: function(data) {
+                            console.log('Success!');
+                            creategraph_modal.style.display = "none";
+                            window.location.href = '/';
+                        },
+                    });
+                });
+            });
+      
 
-{% if invalid_keywords %}
-<script>
-    
-    alert("Invalid keywords !");
-    
+        // **************************** Select Graph **************************************
+      
+        // Get the modal
+        var selectgraph_modal = document.getElementById("selectgraphbox");
+
+        // Get the button that opens the modal
+        var selectgraph_btn = document.getElementById("display-selectgraphbox");
+
+        // Get the <span> element that closes the modal
+        var selectgraph_span = document.getElementsByClassName("closegraphlist")[0];
+        
+        // When the user clicks the button, open the modal 
+        selectgraph_btn.onclick = function() {
+            selectgraph_modal.style.display = "block";
+        }
+        // When the user clicks on <span> (x), close the modal
+        selectgraph_span.onclick = function() {
+            selectgraph_modal.style.display = "none";
+        }
+
+        // When the user clicks anywhere outside of the modal, close it
+        window.onclick = function(event) {
+            if (event.target == selectgraph_modal) {
+                selectgraph_modal.style.display = "none";
+            }
+        }
+
+        // get graph list and white in html
+        var graph_file = JSON.parse('{{ graph_file|tojson }}');
+        var graphlistul = document.getElementById('graphlistul');
+        graphlistul.innerHTML = ""
+        for(var g in graph_file){
+            graphlistul.innerHTML += "<input type='radio' id="+g+" name='graphfileradio' value="+graph_file[g]+" style='margin-left:50px;margin-right:50px'>"+g+"<br><br>";
+        }
+
+        function submit_selectgraph(){
+            var graph_select = document.getElementsByName('graphfileradio');
+            for(var i = 0; i < graph_select.length; i++){
+                if(graph_select[i].checked){
+                    console.log(graph_select[i].value)
+                    $.ajax({
+                        url: "/select_graph",
+                        type: "post", //send it through get method
+                        data:{'gpath': graph_select[i].value},
+                    
+                    })
+                    .done(function(data){
+                        if(data.error){
+                            console.log("Error")
+                        }
+                        else{
+                            selectgraph_modal.style.display = "none";
+                            window.location.href = '/';
+                        }
+                    });
+                }
+            }
+            
+
+        }
+
+        function cancel_selectgraph(){
+            selectgraph_modal.style.display = "none";
+        }
 </script>
 {% endif %}
-
 </html>
 

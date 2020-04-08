@@ -1,73 +1,86 @@
 import backend as backend
-from flask import Flask, render_template, url_for, request, jsonify, session
+from flask import Flask, render_template, url_for, request, jsonify, session, redirect
 from flask_session import Session
+from werkzeug.utils import secure_filename
+import os
 
 app = Flask(__name__)
 app.secret_key = 'd8ca72807d23a1ee51e2016cbb57f36c7e8e51555a25711a'
+UPLOAD_FOLDER = 'upload/'
+ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # session config
 app.config['SESSION_TYPE'] = 'filesystem'
 sess = Session()
 sess.init_app(app)
 
-# session vairable
-"""
-*** main graph ***
-node : main nodes
-edge : main edges
-allpath : shortest path list from centroid
-pathcost : nodes distance to centroid
-
-"""
 @app.route('/', methods=['GET','POST'])
 def index():
-    
     if request.method == 'POST':
+        
+        if session.get('graph'):
+            # check if keywords exist in graph
+            input_keyword = request.form['symptoms'].split()
+            symptoms = backend.check_keyword_exist(input_keyword)
 
-        # check if keywords exist in graph
-        input_keyword = request.form['symptoms'].split()
+            # calculate centroid and build graph
+            if symptoms:
+                # calculate centroid
+                disease, centroid, path, sum_path = backend.disease_hop_activate(symptoms)
+                print("calculate centroid --> done")
+
+                # first 10 candidate
+                n_disease = dict()
+                for k in list(disease.keys())[:10]:
+                    n_disease[k] = [disease[k], sum_path[k]]
+                centroid = list(n_disease)[0]
+
+                # generate d3 graph
+                sp_path, allpath, pathcost = backend.centroid_shotest_path(n_disease, symptoms, centroid)
+                node,  edge= backend.create_graph_sp(n_disease, sp_path, centroid, pathcost)
+                print("create graph --> done")
+
+                # get symptoms frequency
+                symptoms = backend.get_node_occur(symptoms, centroid)
+                
+                # session variable
+                session['allpath'] = allpath
+                session['pathcost'] = pathcost
+                session['node'] = node
+                session['edge'] = edge
+                session['nodes_radius'] = node
+                session['edges_radius'] = edge
+                session['nodes_current'] = node
+                session['edges_current'] = edge
+                session['centroid'] = centroid
+                session['center_node'] = centroid
+                session['symptoms_graph'] = False
+                return render_template('index.html', symptoms = symptoms, diseases = n_disease, node = session['node'], edge=session['edge'])
             
-        symptoms = backend.check_keyword_exist(input_keyword)
-
-        if symptoms:
-            # calculate centroid
-            disease, centroid, path, sum_path = backend.disease_hop_activate(symptoms)
-            print("calculate centroid --> done")
-
-            # first 10 candidate
-            n_disease = dict()
-            for k in list(disease.keys())[:10]:
-                n_disease[k] = [disease[k], sum_path[k]]
-            centroid = list(n_disease)[0]
-
-            # generate d3 graph
-            sp_path, allpath, pathcost = backend.centroid_shotest_path(n_disease, symptoms, centroid)
-            node,  edge= backend.create_graph_sp(n_disease, sp_path, centroid, pathcost)
-            print("create graph --> done")
-
-            # get symptoms frequency
-            symptoms = backend.get_node_occur(symptoms, centroid)
-            
-            # session variable
-            session['allpath'] = allpath
-            session['pathcost'] = pathcost
-            session['node'] = node
-            session['edge'] = edge
-            session['nodes_radius'] = node
-            session['edges_radius'] = edge
-            session['nodes_current'] = node
-            session['edges_current'] = edge
-            session['centroid'] = centroid
-            session['center_node'] = centroid
-            session['symptoms_graph'] = False
-            return render_template('index.html', symptoms = symptoms, diseases = n_disease, node = session['node'], edge=session['edge'])
+            # keywords not exist in graph
+            else:
+                graph_info, nodes_type = backend.graph_info()
+                graph_file = backend.get_graph_file()
+                return render_template('index.html', graph_info = graph_info, nodes_type = nodes_type, graph_file=graph_file, graph_name= session['graph_name'], invalid_keywords = True)
+        
+        # input keywords to empty graph
         else:
-            
-            return render_template('index.html', invalid_keywords = True)
+            graph_file = backend.get_graph_file()
+            return render_template('index.html', graph_file=graph_file, invalid_keywords = True)
+    # homepage
     else:
-        session.clear()
-        graph_info, nodes_type = backend.graph_info()
-        return render_template('index.html', graph_info = graph_info, nodes_type = nodes_type)
+        if session.get('graph'):
+            #session.clear()
+            print('--> graph running')
+            session['graph_name'] = backend.set_graph_location(session['graph'])
+            graph_info, nodes_type = backend.graph_info()
+            graph_file = backend.get_graph_file()
+            return render_template('index.html', graph_info = graph_info, nodes_type = nodes_type, graph_file=graph_file, graph_name= session['graph_name'] )
+        else:
+            print('--> graph empty')
+            graph_file = backend.get_graph_file()
+            return render_template('index.html',  graph_file=graph_file)
 
 # send disease pdf
 @app.route('/send_document', methods=['GET','POST'])
@@ -184,6 +197,50 @@ def current_graph():
     
     return jsonify({'nodes':session['nodes_current'], 'edges':session['edges_current']})
 
+@app.route('/select_graph', methods=['GET','POST'])
+def select_graph():
+    session['graph'] = request.form['gpath']
+    return 'set graph --> done'
+
+@app.route('/clear_graph', methods=['GET','POST'])
+def clear_graph():
+    session.clear()
+    backend.clear_graph()
+    return 'clear graph --> done'
+
+@app.route('/create_graph', methods=['GET','POST'])
+def create_graph():
+    graph_name = request.form['inputgraphname']
+    documents = request.files.getlist('inputdocuments')
+    tag1 = request.form['tag1']
+    tag1_file = request.files.getlist('tag_file1')
+    tag2 = request.form['tag2']
+    tag2_file = request.files.getlist('tag_file2')
+    tag_dict = {tag1:tag1_file[0], tag2:tag2_file[0]}
+    
+    input_path = app.config['UPLOAD_FOLDER']+'/'+graph_name+'/documents'
+    input_wordlist = app.config['UPLOAD_FOLDER']+'/'+graph_name+'/wordlist'
+    try:
+        os.mkdir(app.config['UPLOAD_FOLDER']+'/'+graph_name)
+        os.mkdir(input_path)
+        os.mkdir(input_wordlist)
+    except:
+        pass
+    # unload document
+    for f in documents:
+        filename = secure_filename(os.path.basename(f.filename))
+        f.save(os.path.join(input_path, filename))
+    # upload wordlist
+    listpath = dict()
+    for t in tag_dict:
+        filename = secure_filename(os.path.basename(tag_dict[t].filename))
+        tag_dict[t].save(os.path.join(input_wordlist, filename))
+        listpath[t] = input_wordlist+'/'+filename
+    
+    # pretext
+    new_graph = backend.create_document_graph(input_path, graph_name, listpath)
+    session['graph'] = new_graph
+    return 'create graph done!'
 if __name__ == "__main__":
     app.run(debug=True)
     

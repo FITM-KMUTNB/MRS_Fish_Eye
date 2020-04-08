@@ -2,10 +2,10 @@ import networkx as nx
 import operator
 import random
 import math 
-
+import glob
+import os
 #G = nx.read_gpickle("graph/201th.gpickle")
-G = nx.read_gpickle("graph/221disease.gpickle")
-print(nx.info(G))
+G = None
 
 def check_keyword_exist(keywords):
     node = []
@@ -1141,13 +1141,40 @@ def graph_info():
     graph_info = dict()
     graph_info['nodes'] = len(G)
     graph_info['edges'] = G.number_of_edges()
-    nodes_type = {'Diseases':0, 'Symptoms':0, 'Normal':0}
+    nodes_type = dict()
     for n in G.nodes:
-        if G.node[n]['tag'] == 'DS' or G.node[n]['tag'] == 'DT':
-            nodes_type['Diseases'] += 1
-        elif G.node[n]['tag'] == 'ST':
-            nodes_type['Symptoms'] += 1
+        if G.node[n]['tag'] in nodes_type:
+            nodes_type[G.node[n]['tag']] += 1
         else:
-            nodes_type['Normal'] += 1
+            nodes_type[G.node[n]['tag']] = 1
     
     return graph_info, nodes_type
+
+def get_graph_file():
+    graph_file = dict()
+    for file in glob.glob("graph/*.gpickle"):
+        filename = os.path.basename(file)
+        file = file.replace('\\', '/')
+        graph_file[filename] = file
+    return graph_file
+
+def set_graph_location(gpath):
+    global G
+    G = nx.read_gpickle(gpath)
+    print(nx.info(G))
+    graphname = os.path.basename(gpath)
+    return graphname
+
+def clear_graph():
+    global G
+    G = None
+
+import pretextprocess as pt
+import creategraph as cg
+
+def create_document_graph(inputdoc, graphname, tag):
+    outputfilepath = 'pretext/'+graphname
+    pt.import_pdf_file(inputdoc, outputfilepath, tag)
+    cg.create_graph(outputfilepath+'/', 'graph/'+graphname+'.gpickle')
+    new_graph = 'graph/'+graphname+'.gpickle'
+    return new_graph

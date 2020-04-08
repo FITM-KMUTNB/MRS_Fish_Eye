@@ -176,5 +176,3 @@ def import_pdf_file(inputfilepath, outputfilepath, listpath):
 
 #my_tag =  {'DS': 'import_pdf/diseases/wordlist/diseaselist.txt', 'ST':'import_pdf/diseases/wordlist/symptomlist.txt'}
 #import_pdf_file("import_pdf/diseases/Wiki/", "pretext/disease",my_tag)
-
-print(stopwords)

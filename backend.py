@@ -1152,7 +1152,7 @@ def graph_info():
 
 def get_graph_file():
     graph_file = dict()
-    for file in glob.glob("graph/*.gpickle"):
+    for file in glob.glob("/var/www/webroot/ROOT/graph/*.gpickle"):
         filename = os.path.basename(file)
         file = file.replace('\\', '/')
         graph_file[filename] = file

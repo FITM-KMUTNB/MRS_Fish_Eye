@@ -181,3 +181,5 @@ def _encode_type(file):
     FileCode = chardet.detect(rawdata)
 
     return FileCode['encoding']
+
+#create_graph('Present_dataset/withoutcovid/', "graph/227withoutCovid.gpickle")

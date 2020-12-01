@@ -62,7 +62,8 @@ def create_words_list(listpath):
         if tag not in tag_dict:
             tag_dict[tag] = []
     for tag in listpath:
-        text_list = open(listpath[tag], 'r', encoding="utf-8-sig")
+        #text_list = open(listpath[tag], 'r', encoding="utf-8-sig")
+        text_list = open(listpath[tag], 'r', encoding="cp1252")
         for word in text_list:
             tag_name = word.lower().replace(' ', '_').replace('\n','')
             if tag_name not in tag_dict[tag]:
@@ -176,3 +177,30 @@ def import_pdf_file(inputfilepath, outputfilepath, listpath):
 
 #my_tag =  {'DS': 'import_pdf/diseases/wordlist/diseaselist.txt', 'ST':'import_pdf/diseases/wordlist/symptomlist.txt'}
 #import_pdf_file("import_pdf/diseases/Wiki/", "pretext/disease",my_tag)
+
+
+# Temp
+path = 'Med_Datasets_17112020/Preprocessing_Results/226_diseases_without_COVID-19'
+def read_disease_text_list(path, output):
+    my_tag =  {'DS': 'Med_Datasets_17112020/medresources/diseaseswiki.txt_lc.txt', 'ST':'Med_Datasets_17112020/medresources/symptomswiki.txt_lc.txt'}
+    my_tag_dict, words_token, allwords = create_words_list(my_tag)
+    for file in glob.glob(path+'/*.txt'):
+        filename = os.path.basename(file)
+        if 'untagged' in filename:
+            print(filename)
+            pretext = ''
+            content = open(file, 'r',encoding='cp1252')
+            for line in content:
+                tkn_sents = tokenization(line.strip().lower(), words_token)
+                tag_sents = word_tagged(tkn_sents, my_tag_dict)
+                if len(tkn_sents) > 1:
+                    pretext += tag_sents
+                    pretext += '\n'
+
+            write_file = open(output+filename, 'w', encoding='utf-8')
+            write_file.write(pretext)
+
+            
+#read_disease_text_list(path, 'Present_dataset/withoutcovid/')
+
+

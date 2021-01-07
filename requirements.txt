@@ -56,7 +56,7 @@ joblib==0.17.0
 jwcrypto==0.8
 kiwisolver==1.2.0
 lazy-object-proxy==1.4.3
-lxml==4.5.2
+lxml==4.6.2
 mariadb==1.0.3
 MarkupSafe==1.1.1
 matplotlib==3.3.2

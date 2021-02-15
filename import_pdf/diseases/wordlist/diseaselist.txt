@@ -1,4 +1,4 @@
-﻿Acne
+Acne
 Attention deficit hyperactivity disorder
 Alcoholic liver disease
 Alcoholism
@@ -169,6 +169,7 @@ Rosacea
 Roseola
 Rubella
 Salmonella
+Sarcopenia
 Scabies
 Scarlet fever
 Schizophrenia

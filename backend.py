@@ -332,12 +332,13 @@ def create_graph_sp(disease, path, centroid, pathcost):
     
     return node, edge
 
-def document_content(node):
+def document_content(node, graph_location):
+    G = nx.read_gpickle(graph_location)
     try:
         doc = G.node[node]['document']
         if "'s" in doc:
             doc = doc.replace("'s", "")
-        text_file = 'static/Wiki/'+doc
+        text_file = 'static/PDF/'+doc
         return text_file
     except:
         return None
@@ -1158,6 +1159,12 @@ def get_graph_file():
         filename = os.path.basename(file)
         file = file.replace('\\', '/')
         graph_file[filename] = file
+    if not graph_file:
+        for file in glob.glob(local_path):
+            filename = os.path.basename(file)
+            file = file.replace('\\', '/')
+            graph_file[filename] = file
+
     return graph_file
 
 def set_graph_location(gpath):

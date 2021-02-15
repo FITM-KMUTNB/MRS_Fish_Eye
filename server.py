@@ -86,7 +86,7 @@ def index():
 @app.route('/send_document', methods=['GET','POST'])
 def send_document():
     over_node = request.form['over_node']
-    document = backend.document_content(over_node)
+    document = backend.document_content(over_node, session['graph'])
     
     return jsonify({'read':document})
 

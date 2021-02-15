@@ -183,3 +183,15 @@ def _encode_type(file):
     return FileCode['encoding']
 
 #create_graph('Present_dataset/withoutcovid/', "graph/227withoutCovid.gpickle")
+
+def add_node_document(doc_file, g_file):
+    G = nx.read_gpickle(g_file)
+    open_file = open(doc_file, 'r', encoding=_encode_type(doc_file))
+
+    for line in open_file:
+        node, doc = line.rstrip("\n").split(':')
+        if node in G.nodes:
+            G.node[node]['document'] = doc
+    nx.write_gpickle(G, g_file)
+    
+#add_node_document('import_pdf/diseases/wordlist/node_doc.txt', 'graph/4disease.gpickle')

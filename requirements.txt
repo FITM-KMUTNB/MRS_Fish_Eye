@@ -23,7 +23,7 @@ cssselect==1.1.0
 cycler==0.10.0
 decorator==4.4.2
 distro==1.5.0
-Django==3.1.2
+Django==3.1.12
 et-xmlfile==1.0.1
 etelemetry==0.2.2
 filelock==3.0.12

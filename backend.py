@@ -10,8 +10,9 @@ G = None
 def check_keyword_exist(keywords):
     node = []
     for word in keywords:
-        if G.has_node(word):
-            node.append(word)
+        if word:
+            if G.has_node(word):
+                node.append(word)
     return node
 
 def disease_hop_activate(keywords):

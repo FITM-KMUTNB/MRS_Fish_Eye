@@ -4,15 +4,16 @@ import random
 import math 
 import glob
 import os
+import chardet
+from creategraph import _calculate_link_cost, _write_graph_to_gpickle_format
 #G = nx.read_gpickle("graph/201th.gpickle")
 G = None
 
 def check_keyword_exist(keywords):
     node = []
     for word in keywords:
-        if word:
-            if G.has_node(word):
-                node.append(word)
+        if G.has_node(word):
+            node.append(word)
     return node
 
 def disease_hop_activate(keywords):
@@ -86,7 +87,6 @@ def get2node_path(source, target):
     node_distance = {source:0}
     found_target = False
 
-  
     for an in activate_node:
         
         for nb in nx.neighbors(G, an):
@@ -1188,3 +1188,72 @@ def create_document_graph(inputdoc, graphname, tag):
     cg.create_graph(outputfilepath+'/', 'graph/'+graphname+'.gpickle')
     new_graph = 'graph/'+graphname+'.gpickle'
     return new_graph
+
+def _encode_type(file):
+
+    rawdata = open(file, 'rb').read()
+    FileCode = chardet.detect(rawdata)
+
+    return FileCode['encoding']
+
+def add_document_graph(graph_path, file):
+    word_count = dict()
+    word_tag = dict()
+    link_count = dict()
+    link_dict = dict()
+    G = nx.read_gpickle(graph_path)
+    for n in G.nodes:
+        node_attribute = G.node[n]
+        count = node_attribute['occur']
+        tag = node_attribute['tag']
+        word_count[n] = count
+        word_tag[n] = tag
+    
+    for link in G.edges:
+        link_sort = sorted(link)
+        link_key = link_sort[0] + "|" + link_sort[1]
+        count = G.edges[link]['count']
+        link_count[link_key] = count
+
+    file_text = file.readlines()
+    for line in file_text:
+        word_list = line.decode('utf-8').split()
+        for w in word_list:
+            word, tag = w.split('|')
+            if word in word_count:
+                word_count[word] += 1
+            else:
+                word_count[word] = 1
+                word_tag[word] = tag
+        
+        # link frequencies
+        for source in range(len(word_list)):
+            for target in range(source+1, len(word_list)):
+                if word_list[source] == word_list[target]:
+                    continue
+
+                source_word = None
+                target_word = None
+                # Remove tag
+                if "|" in word_list[source]:
+                    source_word = word_list[source].split('|')[0]
+                else:
+                    source_word = word_list[source]
+
+                if "|" in word_list[target]:
+                    target_word = word_list[target].split('|')[0]
+                else:
+                    target_word = word_list[target]
+
+                # Sort the letters
+                sort_word = sorted([source_word, target_word])
+                pair_word = sort_word[0] + "|" + sort_word[1]
+
+                if pair_word in link_count:
+                    link_count[pair_word] += 1
+                else:
+                    link_count[pair_word] = 1
+    link_cost, link_dict = _calculate_link_cost(word_count, link_count)
+    _write_graph_to_gpickle_format(graph_path, word_count, word_tag, link_count, link_dict, link_cost)
+            
+

@@ -241,6 +241,16 @@ def create_graph():
     new_graph = backend.create_document_graph(input_path, graph_name, listpath)
     session['graph'] = new_graph
     return 'create graph done!'
+
+@app.route('/graph/document/add', methods=['POST'])
+def graph_document_add():
+    graph_document = request.files['inputDocumentGraph']
+    if session['graph']:
+        backend.add_document_graph(session['graph'], graph_document)
+        return 'success', 200
+    else:
+        return 'graph not found', 400
+
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port='80', debug=True)
     

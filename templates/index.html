@@ -1050,7 +1050,10 @@
         <!-- Graph btn -->
         <button class="creategraphbtn" id="display-creategraphbox">Create Graph</button>
         <button class="creategraphbtn" id="display-selectgraphbox">Select Graph</button>
-        <button class="creategraphbtn">Add Document</button>
+        <button class="creategraphbtn" onclick="$('#inputDocumentGraph').click();">Add Document</button>
+        <form id="addDocumentFileForm" style="display: none;">
+            <input type="file" name="inputDocumentGraph" id="inputDocumentGraph" accept=".txt" onchange="add_document_graph()">
+        </form>
         <button class="creategraphbtn" onclick="clear_graph()">Clear</button>
         
         <!-- The Modal -->
@@ -1433,4 +1436,23 @@
 </script>
 {% endif %}
 </html>
+<script>
+    function add_document_graph(){
+        var formDataRaw = $('#addDocumentFileForm')[0];
+        var form_data = new FormData(formDataRaw);
+        $.ajax({
+            url: "/graph/document/add",
+            type: "POST",
+            data: form_data,
+            processData: false,
+            contentType: false
+        })
+        .done(function (data) {
+            location.reload();
+        })
+        .fail(function (data) {
+            alert("Somethig went wrong! Please contact system administrator");
+        })
+    }
+</script>
 
